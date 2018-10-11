@@ -1,7 +1,3 @@
-# Google Mock
-#################################
-set(GMOCK_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/gmock-1.7.0)
-add_subdirectory(${GMOCK_ROOT})
 
 # Boost Test
 #################################
