@@ -100,7 +100,7 @@ TEST(ModifyTest, ModifyField)
 
 TEST(SeqTest, SecondPolicy)
 {
-    policy seq_policy = Sequential{fwd(1), fwd(2)};
+    policy seq_policy = fwd(1) >> fwd(2);
 
     oxm::field_set packet;
     Applier<oxm::field_set> applier{packet};
@@ -114,7 +114,7 @@ TEST(SeqTest, SecondPolicy)
 
 TEST(SeqTest, AllPolicy)
 {
-    policy seq_policy = Sequential{modify(F<1>() << 100), modify(F<2>() << 100)};
+    policy seq_policy = modify(F<1>() << 100) >> modify(F<2>() << 100);
 
     oxm::field_set packet {
         {F<1>() == 0},
@@ -133,7 +133,7 @@ TEST(SeqTest, AllPolicy)
 
 TEST(SeqTest, StopPolicy)
 {
-    policy seq_policy = Sequential{stop(), fwd(2)};
+    policy seq_policy = stop() >> fwd(2);
 
     oxm::field_set packet;
     Applier<oxm::field_set> applier{packet};
@@ -148,7 +148,7 @@ TEST(SeqTest, StopPolicy)
 
 TEST(ParallelTest, ParallelPolicy)
 {
-    policy parallel = Parallel{modify(F<1>() << 100), modify(F<1>() << 200)};
+    policy parallel = modify(F<1>() << 100) + modify(F<1>() << 200);
 
     oxm::field_set packet = {
         {F<1>() == 0}

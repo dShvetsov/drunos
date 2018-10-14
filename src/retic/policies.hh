@@ -21,33 +21,16 @@ public:
     oxm::field<> field;
 };
 
-Filter filter(oxm::field<> f)
-{
-    return Filter{f};
-}
-
 class Stop { };
 
-Stop stop() {
-    return Stop();
-}
 
 struct Forward {
     uint32_t port;
 };
 
-Forward fwd(uint32_t port) {
-    return Forward{port};
-};
-
 struct Modify {
     oxm::field<> field;
 };
-
-Modify modify(oxm::field<> field) {
-    return Modify{field};
-}
-
 
 struct Sequential;
 struct Parallel;
@@ -71,6 +54,33 @@ struct Parallel {
     policy one;
     policy two;
 };
+
+policy modify(oxm::field<> field) {
+    return Modify{field};
+}
+
+policy fwd(uint32_t port) {
+    return Forward{port};
+};
+
+policy stop() {
+    return Stop();
+}
+
+policy filter(oxm::field<> f)
+{
+    return Filter{f};
+}
+
+policy operator>>(policy lhs, policy rhs)
+{
+    return Sequential{lhs, rhs};
+}
+
+policy operator+(policy lhs, policy rhs)
+{
+    return Parallel{lhs, rhs};
+}
 
 
 template <class P> // enable if P is baseof Packet
