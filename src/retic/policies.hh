@@ -50,6 +50,7 @@ Modify modify(oxm::field<> field) {
 
 
 struct Sequential;
+struct Parallel;
 
 using policy =
     boost::variant<
@@ -57,11 +58,16 @@ using policy =
         Forward,
         Modify,
         Stop,
-        boost::recursive_wrapper<Sequential>
-
+        boost::recursive_wrapper<Sequential>,
+        boost::recursive_wrapper<Parallel>
     >;
 
 struct Sequential {
+    policy one;
+    policy two;
+};
+
+struct Parallel {
     policy one;
     policy two;
 };
@@ -103,6 +109,17 @@ class Applier : public boost::static_visitor<> {
         if (not m_pkts.at(0).second.stopped) {
             boost::apply_visitor(*this, seq.two);
         }
+    }
+
+    void operator()(const Parallel& par) {
+        auto save_pkts = m_pkts;
+        boost::apply_visitor(*this, par.one);
+        std::swap(save_pkts, m_pkts);
+        boost::apply_visitor(*this, par.two);
+
+        std::swap(save_pkts, m_pkts);
+        m_pkts.reserve(m_pkts.size() + save_pkts.size());
+        m_pkts.insert(m_pkts.end(), save_pkts.begin(), save_pkts.end());
     }
 
     const std::vector<std::pair<P, Result>>& results() const

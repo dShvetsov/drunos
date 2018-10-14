@@ -145,3 +145,23 @@ TEST(SeqTest, StopPolicy)
             "Second policy must not be applied if pipeline is stopped";
     }
 }
+
+TEST(ParallelTest, ParallelPolicy)
+{
+    policy parallel = Parallel{modify(F<1>() << 100), modify(F<1>() << 200)};
+
+    oxm::field_set packet = {
+        {F<1>() == 0}
+    };
+
+    Applier<oxm::field_set> applier{packet};
+
+    boost::apply_visitor(applier, parallel);
+    auto& results = applier.results();
+    using namespace ::testing;
+    ASSERT_THAT(results, SizeIs(2));
+    EXPECT_THAT(results, UnorderedElementsAre(
+                    Key(ResultOf([](auto& pkt){return pkt.test(F<1>() == 100);}, true)),
+                    Key(ResultOf([](auto& pkt){return pkt.test(F<1>() == 200);}, true))
+                ));
+}
