@@ -75,6 +75,11 @@ public:
 
     size_t total_bytes() const override;
     size_t serialize_to(size_t buffer_size, void* buffer) const override;
+
+    uint32_t get_out_port() const
+    { return out_port; }
+    uint32_t get_in_port() const
+    { return in_port; }
 };
 
 } // namespace runos

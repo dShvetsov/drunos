@@ -18,6 +18,7 @@ set(SOURCES
     Topology.cc
     STP.cc
     Maple.cc
+    Retic.cc
     # Apps
     SimpleLearningSwitch.cc
     LearningSwitch.cc

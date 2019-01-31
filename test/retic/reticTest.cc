@@ -10,6 +10,7 @@
 #include <boost/variant/apply_visitor.hpp>
 
 using namespace runos;
+using namespace retic;
 
 template <size_t N>
 struct F : oxm::define_type< F<N>, 0, N, 32, uint32_t, uint32_t, true>

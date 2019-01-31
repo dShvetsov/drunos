@@ -22,7 +22,7 @@ struct switch_id : define_type  < switch_id
 struct out_port : define_type < out_port
                               , uint16_t(of::oxm::ns::NON_OPENFLOW)
                               , uint8_t(of::oxm::non_openflow_fields::OUT_PORT)
-                              , 64, uint64_t, uint64_t, false >
+                              , 32, uint32_t, uint32_t, false >
 { };
 
 template< class Final,

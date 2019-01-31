@@ -11,6 +11,7 @@
 #include "oxm/openflow_basic.hh"
 
 namespace runos {
+namespace retic {
 
 class Filter {
 public:
@@ -167,5 +168,7 @@ private:
 
     PacketsWithMeta m_pkts;
 };
+
+} // namespace retic
 
 }// namespace runos
