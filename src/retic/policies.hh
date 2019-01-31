@@ -11,11 +11,6 @@
 
 namespace runos {
 
-class Result {
-public:
-    bool stopped = false;
-};
-
 class Filter {
 public:
     oxm::field<> field;
@@ -94,19 +89,29 @@ policy operator+(policy lhs, policy rhs)
 template <class P> // enable if P is baseof Packet
 class Applier : public boost::static_visitor<> {
     public:
-    Applier(P pkt)
-        : m_pkts{{std::forward<P>(pkt), Result{}}}
+
+    using PacketType = P;
+    using PacketsWithMeta = std::vector<std::pair<PacketType, Meta>>;
+
+    Applier(PacketType pkt)
+        : m_pkts{{std::forward<PacketType>(pkt), Meta{}}}
+    { }
+
+    Applier(const PacketsWithMeta& pkts)
+        : m_pkts(pkts)
     { }
 
     void operator()(const Filter& fil) {
-        for (auto& [pkt, res] : m_pkts) {
-            res.stopped = !pkt.test(fil.field);
+        for (auto& [pkt, meta] : m_pkts) {
+            if (!pkt.test(fil.field)) {
+                meta.stop();
+            }
         }
     }
 
     void operator()(const Stop& stop) {
-        for (auto& [pkt, res] : m_pkts) {
-            res.stopped = true;
+        for (auto& [pkt, meta] : m_pkts) {
+            meta.stop();
         }
     }
 
@@ -118,7 +123,7 @@ class Applier : public boost::static_visitor<> {
 
     void operator()(const Sequential& seq) {
         boost::apply_visitor(*this, seq.one);
-        if (not m_pkts.at(0).second.stopped) {
+        if (not m_pkts.at(0).second.isStopped()) {
             boost::apply_visitor(*this, seq.two);
         }
     }
@@ -134,11 +139,12 @@ class Applier : public boost::static_visitor<> {
         m_pkts.insert(m_pkts.end(), save_pkts.begin(), save_pkts.end());
     }
 
-    const std::vector<std::pair<P, Result>>& results() const
+    const PacketsWithMeta& results() const
     { return m_pkts; }
 
 private:
-    std::vector<std::pair<P, Result>> m_pkts;
+
+    PacketsWithMeta m_pkts;
 };
 
 }// namespace runos

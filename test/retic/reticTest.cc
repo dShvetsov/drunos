@@ -27,7 +27,7 @@ TEST(FilterTest, TrueFilter)
     auto& results = applier.results();
     for (auto& [pkt, result] : results )
     {
-        EXPECT_FALSE(result.stopped) <<
+        EXPECT_FALSE(result.isStopped()) <<
             "Filter mustn't stop packet with same field";
     }
 }
@@ -44,7 +44,7 @@ TEST(FilterTest, FalseFilter)
     auto& results = applier.results();
     for (auto& [pkt, result] : results )
     {
-        EXPECT_TRUE(result.stopped) <<
+        EXPECT_TRUE(result.isStopped()) <<
             "Filter must stop packet with wrong field";
     }
 }
@@ -59,7 +59,7 @@ TEST(StopTest, StopTest)
     auto& results = applier.results();
     for (auto& [pkt, result] : results )
     {
-        EXPECT_TRUE(result.stopped) <<
+        EXPECT_TRUE(result.isStopped()) <<
             "Filter must stop packet with wrong field";
     }
 
@@ -164,4 +164,37 @@ TEST(ParallelTest, ParallelPolicy)
                     Key(ResultOf([](auto& pkt){return pkt.test(F<1>() == 100);}, true)),
                     Key(ResultOf([](auto& pkt){return pkt.test(F<1>() == 200);}, true))
                 ));
+}
+
+TEST(ComplexTest, Test1)
+{
+    policy f = filter(F<1>() == 100) + filter(F<2>() == 200);
+    policy modify_and_forward = (modify(F<1>() << 300) >> fwd(666)) + fwd(123);
+    policy all = f >> modify_and_forward;
+
+    oxm::field_set packet = {
+        {F<1>() == 100},
+        {F<2>() == 200}
+    };
+
+    Applier<oxm::field_set> applier{packet};
+    boost::apply_visitor(applier, all);
+    auto& results = applier.results();
+    using namespace ::testing;
+
+    EXPECT_THAT(results, Contains(
+                Key(ResultOf([](auto& pkt){
+                        return pkt.test(F<1>() == 300) &&
+                               pkt.test(F<2>() == 200) &&
+                               pkt.test(oxm::out_port() == 666);
+                        }, true))
+        ));
+    EXPECT_THAT(results, Contains(
+                Key(ResultOf([](auto& pkt){
+                        return pkt.test(F<1>() == 100) &&
+                               pkt.test(F<2>() == 200) &&
+                               pkt.test(oxm::out_port() == 123);
+                        }, true))
+        ));
+
 }
