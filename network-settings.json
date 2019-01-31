@@ -2,7 +2,6 @@
 
 "default": {
     "services": [
-        "learning-switch",
         "link-discovery",
         "rest-listener",
         "host-manager",
@@ -13,7 +12,11 @@
         "flow-manager",
         "rest-multipart",
         "rest-flowmod",
-        "maple"
+        "maple",
+        "learning-switch",
+        "drop-all",
+        "no-maple-rules",
+        "retic"
     ],
 
     "tables": {
@@ -31,6 +34,7 @@
     },
 
     "controller": {
+        "port": 6652,
          "nthreads": 1,
          "cbench": false
    },
@@ -39,7 +43,8 @@
           "pipeline": [
              "link-discovery",
              "host-manager",
-             "forwarding"
+             "drop-all",
+             "no-maple-rules"
          ]
     },
 

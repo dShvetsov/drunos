@@ -24,6 +24,8 @@ set(SOURCES
     LearningSwitch.cc
     CBench.cc
     Stats.cc
+    DropAll.cc
+    NoMapleRules.cc
 #ArpHandler.cc
     StaticFlowPusher.cc
     RestMultipart.cc
@@ -53,6 +55,8 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/third_party/webserver
 )
 
+add_library(runos_base STATIC ${SOURCES})
+
 add_executable(runos ${SOURCES})
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
@@ -70,5 +74,4 @@ target_link_libraries(runos
     ${Boost_THREAD_LIBRARY}
     ${Boost_LIBRARIES}
     pthread
-
 )

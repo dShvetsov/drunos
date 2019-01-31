@@ -65,34 +65,41 @@ struct Parallel {
     policy two;
 };
 
+inline
 policy modify(oxm::field<> field) {
     return Modify{field};
 }
 
+inline
 policy fwd(uint32_t port) {
     static oxm::out_port out_port;
     return modify(out_port << port);
 };
 
+inline
 policy stop() {
     return Stop();
 }
 
+inline
 policy filter(oxm::field<> f)
 {
     return Filter{f};
 }
 
+inline
 policy handler(std::function<policy(Packet&)> function)
 {
     return PacketFunction{function};
 }
 
+inline
 policy operator>>(policy lhs, policy rhs)
 {
     return Sequential{lhs, rhs};
 }
 
+inline
 policy operator+(policy lhs, policy rhs)
 {
     return Parallel{lhs, rhs};
