@@ -1,7 +1,8 @@
 #pragma once
 
-#include <set>
+#include <functional>
 #include <list>
+#include <set>
 #include <tuple>
 #include <boost/variant.hpp>
 #include <boost/variant/recursive_wrapper_fwd.hpp>
@@ -37,15 +38,21 @@ struct Modify {
 
 struct Sequential;
 struct Parallel;
+struct PacketFunction;
 
 using policy =
     boost::variant<
         Filter,
         Modify,
         Stop,
+        boost::recursive_wrapper<PacketFunction>,
         boost::recursive_wrapper<Sequential>,
         boost::recursive_wrapper<Parallel>
     >;
+
+struct PacketFunction {
+    std::function<policy(Packet& pkt)> function;
+};
 
 struct Sequential {
     policy one;
@@ -73,6 +80,11 @@ policy stop() {
 policy filter(oxm::field<> f)
 {
     return Filter{f};
+}
+
+policy handler(std::function<policy(Packet&)> function)
+{
+    return PacketFunction{function};
 }
 
 policy operator>>(policy lhs, policy rhs)
@@ -137,6 +149,15 @@ class Applier : public boost::static_visitor<> {
         std::swap(save_pkts, m_pkts);
         m_pkts.reserve(m_pkts.size() + save_pkts.size());
         m_pkts.insert(m_pkts.end(), save_pkts.begin(), save_pkts.end());
+    }
+
+    void operator()(const PacketFunction& func) {
+        for (auto& [pkt, meta] : m_pkts) {
+            if (not meta.isStopped()) {
+                policy p = func.function(pkt);
+                boost::apply_visitor(*this, p);
+            }
+        }
     }
 
     const PacketsWithMeta& results() const

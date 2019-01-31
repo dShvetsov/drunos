@@ -198,3 +198,79 @@ TEST(ComplexTest, Test1)
         ));
 
 }
+
+TEST(FunctionTest, SimpleFunction)
+{
+    auto f = [](Packet& pkt) {
+        return modify(F<1>() << 100);
+    };
+
+    policy h = handler(f);
+    oxm::field_set packet = {
+        {F<1>() == 1}
+    };
+
+    Applier<oxm::field_set> applier{packet};
+    boost::apply_visitor(applier, h);
+    auto& results = applier.results();
+    using namespace ::testing;
+    ASSERT_THAT(results, UnorderedElementsAre(
+                Key(ResultOf([](auto& pkt) {
+                        return pkt.test(F<1>() == 100);
+                    }, true))
+        ));
+}
+
+TEST(FunctionTest, FunctionWithFilter1)
+{
+    auto f = [](Packet& pkt) {
+        if (pkt.test(F<1>() == 100)) {
+            return fwd(123);
+        } else {
+            fwd(321);
+        }
+    };
+
+    policy h = handler(f);
+
+    oxm::field_set packet = {
+        {F<1>() == 100}
+    };
+
+    Applier<oxm::field_set> applier{packet};
+    boost::apply_visitor(applier, h);
+    auto& results = applier.results();
+    using namespace ::testing;
+    ASSERT_THAT(results, UnorderedElementsAre(
+                Key(ResultOf([](auto& pkt) {
+                        return pkt.test(oxm::out_port() == 123);
+                    }, true))
+        ));
+}
+
+TEST(FunctionTest, FunctionWithFilter2)
+{
+    auto f = [](Packet& pkt) {
+        if (pkt.test(F<1>() == 100)) {
+            return fwd(123);
+        } else {
+            return fwd(321);
+        }
+    };
+
+    policy h = handler(f);
+
+    oxm::field_set packet = {
+        {F<1>() == 200}
+    };
+
+    Applier<oxm::field_set> applier{packet};
+    boost::apply_visitor(applier, h);
+    auto& results = applier.results();
+    using namespace ::testing;
+    ASSERT_THAT(results, UnorderedElementsAre(
+                Key(ResultOf([](auto& pkt) {
+                        return pkt.test(oxm::out_port() == 321);
+                    }, true))
+        ));
+}
