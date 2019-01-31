@@ -7,13 +7,13 @@
 #include <boost/variant/recursive_wrapper_fwd.hpp>
 #include <boost/variant/static_visitor.hpp>
 #include "api/Packet.hh"
+#include "oxm/openflow_basic.hh"
 
 namespace runos {
 
 class Result {
 public:
     bool stopped = false;
-    uint32_t port;
 };
 
 class Filter {
@@ -23,9 +23,17 @@ public:
 
 class Stop { };
 
+class Meta {
+public:
+    bool isStopped() const {
+        return m_is_stopped;
+    }
 
-struct Forward {
-    uint32_t port;
+    void stop() {
+        m_is_stopped = true;
+    }
+private:
+    bool m_is_stopped = false;
 };
 
 struct Modify {
@@ -38,7 +46,6 @@ struct Parallel;
 using policy =
     boost::variant<
         Filter,
-        Forward,
         Modify,
         Stop,
         boost::recursive_wrapper<Sequential>,
@@ -60,7 +67,8 @@ policy modify(oxm::field<> field) {
 }
 
 policy fwd(uint32_t port) {
-    return Forward{port};
+    static oxm::out_port out_port;
+    return modify(out_port << port);
 };
 
 policy stop() {
@@ -99,12 +107,6 @@ class Applier : public boost::static_visitor<> {
     void operator()(const Stop& stop) {
         for (auto& [pkt, res] : m_pkts) {
             res.stopped = true;
-        }
-    }
-
-    void operator()(const Forward& fwd) {
-        for (auto& [pkt, res] : m_pkts) {
-            res.port = fwd.port;
         }
     }
 

@@ -74,7 +74,7 @@ TEST(ForwardTest, ForwardToPort)
     auto& results = applier.results();
     for (auto& [pkt, result] : results)
     {
-        EXPECT_EQ(1, result.port);
+        EXPECT_TRUE(pkt.test(oxm::out_port() == 1));
     }
 }
 
@@ -108,7 +108,7 @@ TEST(SeqTest, SecondPolicy)
     boost::apply_visitor(applier, seq_policy);
     auto& results = applier.results();
     for (auto& [pkt, result] : results) {
-        EXPECT_EQ(2, result.port) << "Second policy must be applied";
+        EXPECT_TRUE(pkt.test(oxm::out_port() == 2)) << "Second policy must be applied";
     }
 }
 
@@ -141,7 +141,7 @@ TEST(SeqTest, StopPolicy)
     boost::apply_visitor(applier, seq_policy);
     auto& results = applier.results();
     for (auto& [pkt, result] : results) {
-        EXPECT_EQ(0, result.port) <<
+        EXPECT_TRUE(pkt.test(oxm::out_port() == 2)) <<
             "Second policy must not be applied if pipeline is stopped";
     }
 }

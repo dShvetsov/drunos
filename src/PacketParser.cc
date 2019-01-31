@@ -344,6 +344,9 @@ PacketParser::PacketParser(fluid_msg::of13::PacketIn& pi, uint64_t dpid)
     bind({
         { non_of::SWITCH_ID, &switch_id }
     });
+    bind({
+            { non_of::OUT_PORT, &out_port }
+    });
 
     if (data) {
         parse_l2(data, data_len);
