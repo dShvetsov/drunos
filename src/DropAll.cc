@@ -1,4 +1,3 @@
-#pragma once
 #include "Application.hh"
 #include "Loader.hh"
 #include "Maple.hh"
