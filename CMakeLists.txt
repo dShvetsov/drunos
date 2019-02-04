@@ -5,6 +5,7 @@ project(runos)
 include(third_party/configure.cmake)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_FLAGS "-g")
 
 # Locally installed libraries
 find_package(Qt5Core)

@@ -8,6 +8,7 @@ add_executable(runReticTest
 target_link_libraries(runReticTest
     ${TEST_LINK_LIBRARIES}
     libfluid_msg.a
+    runos_base
     runos_types
 )
 

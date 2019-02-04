@@ -32,7 +32,6 @@ set(SOURCES
     RestFlowMod.cc
     RestStringProcessing.cc
     # Loader
-    Main.cc
     # REST
     RestListener.cc
     Event.cc
@@ -55,12 +54,16 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/third_party/webserver
 )
 
-add_library(runos_base STATIC ${SOURCES})
+add_library(runos_base ${SOURCES})
 
-add_executable(runos ${SOURCES})
+target_link_libraries(runos_base
+        Qt5::Core)
+
+add_executable(runos Main.cc)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
 target_link_libraries(runos
+    runos_base
     runos_types
     runos_maple
     tcmalloc

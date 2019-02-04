@@ -25,7 +25,8 @@ class PacketParser final : public SerializablePacket {
     uint8_t* data;
     size_t data_len;
     boost::endian::big_uint32_t in_port;
-    boost::endian::big_uint32_t out_port = 0;
+    // boost::endian::big_uint32_t out_port = 0;
+    uint32_t out_port = 0;
     boost::endian::big_uint64_t switch_id;
 
     //ofb_bindings
