@@ -72,7 +72,7 @@ policy modify(oxm::field<> field) {
 
 inline
 policy fwd(uint32_t port) {
-    static oxm::out_port out_port;
+    static constexpr auto out_port = oxm::out_port();
     return modify(out_port << port);
 };
 
