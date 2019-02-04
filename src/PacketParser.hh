@@ -23,10 +23,9 @@ namespace runos {
 class PacketParser final : public SerializablePacket {
     // buffer
     uint8_t* data;
+    boost::endian::big_uint32_t out_port;
     size_t data_len;
     boost::endian::big_uint32_t in_port;
-    // boost::endian::big_uint32_t out_port = 0;
-    uint32_t out_port = 0;
     boost::endian::big_uint64_t switch_id;
 
     //ofb_bindings
@@ -79,6 +78,7 @@ public:
 
     uint32_t get_out_port() const
     { return out_port; }
+
     uint32_t get_in_port() const
     { return in_port; }
 };
