@@ -27,6 +27,7 @@ set(SOURCES
     DropAll.cc
     NoMapleRules.cc
 #ArpHandler.cc
+    StaticFlowPusher.hh
     StaticFlowPusher.cc
     RestMultipart.cc
     RestFlowMod.cc
@@ -54,16 +55,16 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/third_party/webserver
 )
 
-add_library(runos_base ${SOURCES})
+add_library(runos_base STATIC ${SOURCES})
 
 target_link_libraries(runos_base
         Qt5::Core)
 
-add_executable(runos Main.cc)
+add_executable(runos Main.cc ${SOURCES})
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
 target_link_libraries(runos
-    runos_base
+# runos_base
     runos_types
     runos_maple
     tcmalloc
