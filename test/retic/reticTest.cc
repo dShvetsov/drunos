@@ -2,6 +2,7 @@
 #include <gmock/gmock.h>
 
 #include "retic/policies.hh"
+#include "retic/applier.hh"
 #include "oxm/openflow_basic.hh"
 #include "oxm/field_set.hh"
 

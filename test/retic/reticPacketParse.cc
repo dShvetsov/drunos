@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include "retic/applier.hh"
 #include "retic/policies.hh"
 #include "oxm/openflow_basic.hh"
 #include "oxm/field_set.hh"

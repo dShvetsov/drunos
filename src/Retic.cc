@@ -3,6 +3,7 @@
 #include "Controller.hh"
 #include "Common.hh"
 #include "oxm/openflow_basic.hh"
+#include "retic/applier.hh"
 #include "PacketParser.hh"
 
 REGISTER_APPLICATION(Retic, {"controller", ""})
@@ -40,5 +41,4 @@ void Retic::init(Loader* loader, const Config& config)
                 }
             }
         );
-
 }
