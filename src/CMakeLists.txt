@@ -1,5 +1,6 @@
 add_subdirectory(types)
 add_subdirectory(maple)
+add_subdirectory(retic)
 
 set(SOURCES
     # Core
