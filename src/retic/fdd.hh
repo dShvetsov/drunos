@@ -3,20 +3,46 @@
 #include <boost/variant.hpp>
 #include <boost/variant/recursive_wrapper_fwd.hpp>
 
+#include <oxm/field.hh>
+#include <oxm/field_set.hh>
+
+#include "policies.hh"
+
 namespace runos {
 namespace retic {
+namespace fdd {
 
-class fdd {
-private:
-    struct leaf { bool value; };
-    struct node;
-    struct compiler;
-
-    using diagram = boost::variant<
-            leaf,
-            boost::recursive_wrapper<node>
-        >;
+struct leaf {
+    std::vector<oxm::field_set> sets;
 };
 
+struct node;
+struct compiler;
+
+using diagram = boost::variant<
+        leaf,
+        boost::recursive_wrapper<node>
+    >;
+
+
+struct node {
+    oxm::field<> field;
+    diagram positive;
+    diagram negative;
+};
+
+class Compiler: public boost::static_visitor<diagram> {
+public:
+    diagram operator()(const Filter& fil);
+    diagram operator()(const Modify& mod);
+    diagram operator()(const Stop& stop);
+    diagram operator()(const Sequential&);
+    diagram operator()(const Parallel&);
+    diagram operator()(const PacketFunction&);
+};
+
+diagram compile(const policy&);
+
+} // namespace fdd
 } // namespace retic
 } // namespace runos
