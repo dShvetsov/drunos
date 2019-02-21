@@ -55,7 +55,86 @@ TEST(FddTest, ParallelLeafLeaf) {
         ));
 }
 
+TEST(FddTest, ParallellNodeLeaf) {
+    policy p = filter(F<1>() == 1) + modify(F<3>() << 3);
+    fdd::diagram diagram = fdd::compile(p);
+    fdd::node node = boost::get<fdd::node>(diagram);
+    oxm::field<> true_value = F<1>() == 1;
+    EXPECT_EQ(true_value, node.field);
+    fdd::leaf pos = boost::get<fdd::leaf>(node.positive);
+    EXPECT_THAT(pos.sets, UnorderedElementsAre(
+        oxm::field_set{F<3>() == 3},
+        oxm::field_set() // filter empty value
+    ));
+    fdd::leaf neg = boost::get<fdd::leaf>(node.negative);
+    EXPECT_THAT(neg.sets, UnorderedElementsAre(oxm::field_set{F<3>() == 3}));
+}
 
-TEST(Fdd, ParallelLeafNode) {
-    policy p = 
+TEST(FddTest, ParallellLeafNode) {
+    policy p = modify(F<3>() << 3) + filter(F<1>() == 1);
+    fdd::diagram diagram = fdd::compile(p);
+    fdd::node node = boost::get<fdd::node>(diagram);
+    oxm::field<> true_value = F<1>() == 1;
+    EXPECT_EQ(true_value, node.field);
+    fdd::leaf pos = boost::get<fdd::leaf>(node.positive);
+    EXPECT_THAT(pos.sets, UnorderedElementsAre(
+        oxm::field_set{F<3>() == 3},
+        oxm::field_set() // filter empty value
+    ));
+    fdd::leaf neg = boost::get<fdd::leaf>(node.negative);
+    EXPECT_THAT(neg.sets, UnorderedElementsAre(oxm::field_set{F<3>() == 3}));
+}
+
+TEST(FddTest, ParallelNodeNodeEquals) {
+    fdd::diagram node1 = fdd::node{
+            {F<1>() == 1},
+            fdd::leaf{{oxm::field_set{F<2>() == 2}}},
+            fdd::leaf{{oxm::field_set{F<3>() == 3}}}
+    };
+    fdd::diagram node2 = fdd::node{
+            {F<1>() == 1},
+            fdd::leaf{{oxm::field_set{F<5>() == 5}}},
+            fdd::leaf{{oxm::field_set{F<6>() == 6}}}
+    };
+    fdd::parallel_composition pc;
+    fdd::diagram diagram = boost::apply_visitor(pc, node1, node2);
+    fdd::node node = boost::get<fdd::node>(diagram);
+    EXPECT_EQ(oxm::field<>(F<1>() == 1), node.field);
+    fdd::leaf pos = boost::get<fdd::leaf>(node.positive);
+    EXPECT_THAT(pos.sets, UnorderedElementsAre(
+        oxm::field_set{F<2>() == 2},
+        oxm::field_set{F<5>() == 5}
+    ));
+    fdd::leaf neg = boost::get<fdd::leaf>(node.negative);
+    EXPECT_THAT(neg.sets, UnorderedElementsAre(
+        oxm::field_set{F<3>() == 3},
+        oxm::field_set{F<6>() == 6}
+    ));
+}
+
+TEST(FddTest, ParallelNodeNodeEqualFields) {
+    fdd::diagram node1 = fdd::node{
+            {F<1>() == 1},
+            fdd::leaf{{oxm::field_set{F<2>() == 2}}},
+            fdd::leaf{{oxm::field_set{F<3>() == 3}}}
+    };
+    fdd::diagram node2 = fdd::node{
+            {F<1>() == 2},
+            fdd::leaf{{oxm::field_set{F<5>() == 5}}},
+            fdd::leaf{{oxm::field_set{F<6>() == 6}}}
+    };
+    fdd::parallel_composition pc;
+    fdd::diagram diagram = boost::apply_visitor(pc, node1, node2);
+    fdd::node node = boost::get<fdd::node>(diagram);
+    EXPECT_EQ(oxm::field<>(F<1>() == 1), node.field);
+    fdd::leaf pos = boost::get<fdd::leaf>(node.positive);
+    EXPECT_THAT(pos.sets, UnorderedElementsAre(
+        oxm::field_set{F<2>() == 2},
+        oxm::field_set{F<5>() == 5}
+    ));
+    fdd::leaf neg = boost::get<fdd::leaf>(node.negative);
+    EXPECT_THAT(neg.sets, UnorderedElementsAre(
+        oxm::field_set{F<3>() == 3},
+        oxm::field_set{F<6>() == 6}
+    ));
 }

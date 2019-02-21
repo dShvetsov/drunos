@@ -43,6 +43,14 @@ public:
 
 diagram compile(const policy&);
 
+struct parallel_composition: public boost::static_visitor<diagram>
+{
+    diagram operator()(const leaf& lhs, const leaf& rhs);
+    diagram operator()(const node& lhs, const leaf& rhs);
+    diagram operator()(const leaf& lhs, const node& rhs);
+    diagram operator()(const node&, const node&);
+};
+
 } // namespace fdd
 } // namespace retic
 } // namespace runos
