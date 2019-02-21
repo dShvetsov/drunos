@@ -42,3 +42,20 @@ TEST(FddTest, Filter) {
     EXPECT_THAT(neg.sets, IsEmpty());
 
 }
+
+TEST(FddTest, ParallelLeafLeaf) {
+    policy p = modify(F<1>() << 100) + modify(F<2>() << 200);
+    fdd::diagram diagram = fdd::compile(p);
+    fdd::leaf leaf = boost::get<fdd::leaf>(diagram);
+    ASSERT_THAT(leaf.sets, SizeIs(2));
+    EXPECT_THAT(leaf.sets,
+        UnorderedElementsAre(
+            oxm::field_set{F<1>() == 100},
+            oxm::field_set{F<2>() == 200}
+        ));
+}
+
+
+TEST(Fdd, ParallelLeafNode) {
+    policy p = 
+}
