@@ -43,6 +43,11 @@ public:
 
 diagram compile(const policy&);
 
+bool operator==(const leaf& lhs, const leaf& rhs);
+bool operator==(const node& lhs, const node& rhs);
+std::ostream& operator<<(std::ostream& out, const leaf& v);
+std::ostream& operator<<(std::ostream& out, const node& v);
+
 struct parallel_composition: public boost::static_visitor<diagram>
 {
     diagram operator()(const leaf& lhs, const leaf& rhs);

@@ -65,9 +65,59 @@ diagram parallel_composition::operator()(const leaf& lhs, const node& rhs) {
 }
 
 diagram parallel_composition::operator()(const node& lhs, const node& rhs) {
-    diagram positive = boost::apply_visitor(*this, diagram(lhs.positive), diagram(rhs.positive));
-    diagram negative = boost::apply_visitor(*this, diagram(lhs.negative), diagram(rhs.negative));
-    return node{lhs.field, positive, negative};
+    if (lhs.field == rhs.field) {
+        diagram positive = boost::apply_visitor(
+            *this, diagram(lhs.positive), diagram(rhs.positive)
+        );
+        diagram negative = boost::apply_visitor(
+            *this, diagram(lhs.negative), diagram(rhs.negative)
+        );
+        return node{lhs.field, positive, negative};
+    } else if (lhs.field.type() == rhs.field.type()) {
+        diagram positive = boost::apply_visitor(
+            *this, diagram(lhs.positive), diagram(rhs.negative)
+        );
+        diagram negative = boost::apply_visitor(
+            *this, diagram(lhs.negative), diagram(rhs)
+        );
+        return node{lhs.field, positive, negative};
+    }
+    return leaf{};
+}
+
+
+bool operator==(const node& lhs, const node& rhs) {
+    return lhs.field == rhs.field &&
+        lhs.positive == rhs.positive && lhs.negative == rhs.negative;
+}
+
+
+bool operator==(const leaf& lhs, const leaf& rhs) {
+    for (const auto& f: lhs.sets) {
+        if (std::find(rhs.sets.begin(), rhs.sets.end(), f) == rhs.sets.end()) {
+            return false;
+        }
+    }
+    for (const auto& f: rhs.sets) {
+        if (std::find(lhs.sets.begin(), lhs.sets.end(), f) == lhs.sets.end()) {
+            return false;
+        }
+    }
+    return true;
+}
+
+std::ostream& operator<<(std::ostream& out, const node& rhs) {
+    out << "field " << rhs.field << " ? (" << rhs.positive << ") : (" << rhs.negative << ")";
+    return out;
+}
+
+std::ostream& operator<<(std::ostream& out, const leaf& rhs) {
+    out << "set_field: [ ";
+    for (auto& i: rhs.sets) {
+        out << "(" << i << ") ";
+    }
+    out << " ]";
+    return out;
 }
 
 } // namespace fdd
