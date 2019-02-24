@@ -3,6 +3,7 @@
 
 #include "retic/fdd.hh"
 #include "retic/policies.hh"
+#include "oxm/openflow_basic.hh"
 
 using namespace runos;
 using namespace retic;
@@ -13,6 +14,17 @@ template <size_t N>
 struct F : oxm::define_type< F<N>, 0, N, 32, uint32_t, uint32_t, true>
 { };
 
+
+TEST(TypeComprassion, Types) {
+    const auto ofb_switch_id = oxm::switch_id();
+    const auto ofb_eth_src = oxm::eth_src();
+    const auto ofb_eth_type = oxm::eth_type();
+    EXPECT_EQ(0, fdd::compare_types(ofb_switch_id, ofb_switch_id));
+    EXPECT_EQ(0, fdd::compare_types(ofb_eth_src, ofb_eth_src));
+    EXPECT_EQ(0, fdd::compare_types(ofb_eth_type, ofb_eth_type));
+    EXPECT_GT(0, fdd::compare_types(ofb_eth_type, ofb_switch_id));
+    EXPECT_GT(0, fdd::compare_types(ofb_eth_type, ofb_eth_src));
+}
 
 TEST(EqualFdd, EqualTest) {
     fdd::diagram node1 = fdd::node{F<1>() == 1, fdd::leaf{}, fdd::leaf{}};
@@ -144,7 +156,8 @@ TEST(FddTest, ParallelNodeNodeEqualFields) {
             fdd::leaf{{oxm::field_set{F<6>() == 6}}}
     };
     fdd::parallel_composition pc;
-    fdd::diagram result_value = boost::apply_visitor(pc, node1, node2);
+    fdd::diagram result_value1 = boost::apply_visitor(pc, node1, node2);
+    fdd::diagram result_value2 =  boost::apply_visitor(pc, node2, node1);
 
     fdd::diagram true_value = fdd::node {
         {F<1>() == 1},
@@ -165,6 +178,55 @@ TEST(FddTest, ParallelNodeNodeEqualFields) {
         }
     };
 
-    EXPECT_EQ(true_value, result_value);
+
+    EXPECT_EQ(true_value, result_value1);
+    EXPECT_EQ(true_value, result_value2);
+
+}
+
+TEST(FddTest, ParallelNodeNodeDiffFields) {
+    fdd::diagram node1 = fdd::node{
+            {F<1>() == 1},
+            fdd::leaf{{oxm::field_set{F<2>() == 2}}},
+            fdd::leaf{{oxm::field_set{F<3>() == 3}}}
+    };
+    fdd::diagram node2 = fdd::node{
+            {F<2>() == 2},
+            fdd::leaf{{oxm::field_set{F<5>() == 5}}},
+            fdd::leaf{{oxm::field_set{F<6>() == 6}}}
+    };
+    fdd::parallel_composition pc;
+    fdd::diagram result_value1 = boost::apply_visitor(pc, node1, node2);
+    fdd::diagram result_value2 =  boost::apply_visitor(pc, node2, node1);
+
+    fdd::diagram true_value = fdd::node {
+        {F<1>() == 1},
+        fdd::node {
+            {F<2>() == 2},
+            fdd::leaf{{
+                oxm::field_set{F<2>() == 2},
+                oxm::field_set{F<5>() == 5}
+            }},
+            fdd::leaf{{
+                oxm::field_set{F<2>() == 2},
+                oxm::field_set{F<6>() == 6}
+            }}
+        },
+        fdd::node{
+            {F<2>() == 2},
+            fdd::leaf{{
+                oxm::field_set{F<3>() == 3},
+                oxm::field_set{F<5>() == 5}
+            }},
+            fdd::leaf{{
+                oxm::field_set{F<3>() == 3},
+                oxm::field_set{F<6>() == 6}
+            }}
+        }
+    };
+
+
+    EXPECT_EQ(true_value, result_value1);
+    EXPECT_EQ(true_value, result_value2);
 
 }

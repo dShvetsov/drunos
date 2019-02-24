@@ -74,17 +74,34 @@ diagram parallel_composition::operator()(const node& lhs, const node& rhs) {
         );
         return node{lhs.field, positive, negative};
     } else if (lhs.field.type() == rhs.field.type()) {
-        diagram positive = boost::apply_visitor(
-            *this, diagram(lhs.positive), diagram(rhs.negative)
-        );
-        diagram negative = boost::apply_visitor(
-            *this, diagram(lhs.negative), diagram(rhs)
-        );
+        if (lhs.field.value_bits() < rhs.field.value_bits()) {
+            diagram positive = boost::apply_visitor(
+                *this, diagram(lhs.positive), diagram(rhs.negative)
+            );
+            diagram negative = boost::apply_visitor(
+                *this, diagram(lhs.negative), diagram(rhs)
+            );
+            return node{lhs.field, positive, negative};
+        } else {
+            return boost::apply_visitor(
+                *this, diagram(rhs), diagram(lhs)
+            );
+        }
+    } else if (compare_types(lhs.field.type(), rhs.field.type()) > 0) {
+        diagram positive = boost::apply_visitor(*this, diagram(lhs.positive), diagram(rhs));
+        diagram negative = boost::apply_visitor(*this, diagram(lhs.negative), diagram(rhs));
         return node{lhs.field, positive, negative};
+    } else {
+        return boost::apply_visitor(
+            *this, diagram(rhs), diagram(lhs)
+        );
     }
-    return leaf{};
+    throw std::logic_error("Unexsting case of ordering fields");
 }
 
+
+
+//=============== Operators =======================//
 
 bool operator==(const node& lhs, const node& rhs) {
     return lhs.field == rhs.field &&
@@ -118,6 +135,15 @@ std::ostream& operator<<(std::ostream& out, const leaf& rhs) {
     }
     out << " ]";
     return out;
+}
+
+int compare_types(const oxm::type lhs_type, oxm::type rhs_type)
+{
+//    auto lhs_type = lhs.type();
+//    auto rhs_type = rhs.type();
+    uint64_t lhs_type_id = lhs_type.ns() << 16 | lhs_type.id();
+    uint64_t rhs_type_id = rhs_type.ns() << 16 | rhs_type.id();
+    return rhs_type_id - lhs_type_id;
 }
 
 } // namespace fdd

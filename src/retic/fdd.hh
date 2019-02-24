@@ -47,6 +47,7 @@ bool operator==(const leaf& lhs, const leaf& rhs);
 bool operator==(const node& lhs, const node& rhs);
 std::ostream& operator<<(std::ostream& out, const leaf& v);
 std::ostream& operator<<(std::ostream& out, const node& v);
+int compare_types(const oxm::type lhs, oxm::type rhs);
 
 struct parallel_composition: public boost::static_visitor<diagram>
 {
