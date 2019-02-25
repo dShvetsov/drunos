@@ -31,6 +31,15 @@ struct node {
     diagram negative;
 };
 
+class restriction {
+public:
+    oxm::field<> field;
+    diagram d;
+    bool test; // positive or negative test
+
+    diagram apply();
+};
+
 class Compiler: public boost::static_visitor<diagram> {
 public:
     diagram operator()(const Filter& fil);
@@ -50,6 +59,14 @@ std::ostream& operator<<(std::ostream& out, const node& v);
 int compare_types(const oxm::type lhs, oxm::type rhs);
 
 struct parallel_composition: public boost::static_visitor<diagram>
+{
+    diagram operator()(const leaf& lhs, const leaf& rhs);
+    diagram operator()(const node& lhs, const leaf& rhs);
+    diagram operator()(const leaf& lhs, const node& rhs);
+    diagram operator()(const node&, const node&);
+};
+
+struct sequential_composition: public boost::static_visitor<diagram>
 {
     diagram operator()(const leaf& lhs, const leaf& rhs);
     diagram operator()(const node& lhs, const leaf& rhs);

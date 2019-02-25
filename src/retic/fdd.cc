@@ -30,8 +30,11 @@ diagram Compiler::operator()(const Modify& mod) {
 diagram Compiler::operator()(const Stop& stop) {
     return leaf{};
 }
-diagram Compiler::operator()(const Sequential&) {
-    throw std::runtime_error("Not implemented");
+diagram Compiler::operator()(const Sequential& s) {
+    sequential_composition dispatcher;
+    diagram d1 = boost::apply_visitor(*this, s.one);
+    diagram d2 = boost::apply_visitor(*this, s.two);
+    return boost::apply_visitor(dispatcher, d1, d2);
 }
 diagram Compiler::operator()(const Parallel& p) {
     parallel_composition dispatcher;
@@ -46,6 +49,7 @@ diagram Compiler::operator()(const PacketFunction&) {
 
 // ================= Compositions operators ============================
 
+// ---- Parallel -----
 diagram parallel_composition::operator()(const leaf& lhs, const leaf& rhs) {
     leaf ret;
     ret.sets.reserve(lhs.sets.size() + rhs.sets.size());
@@ -100,6 +104,87 @@ diagram parallel_composition::operator()(const node& lhs, const node& rhs) {
 }
 
 
+// ----Sequential----
+
+diagram sequential_composition::operator()(const leaf& lhs, const leaf& rhs)
+{
+    throw std::runtime_error("Not implemented");
+}
+diagram sequential_composition::operator()(const node& lhs, const leaf& rhs)
+{
+    throw std::runtime_error("Not implemented");
+}
+diagram sequential_composition::operator()(const leaf& lhs, const node& rhs)
+{
+    throw std::runtime_error("Not implemented");
+}
+diagram sequential_composition::operator()(const node& lhs, const node& rhs)
+{
+    throw std::runtime_error("Not implemented");
+}
+
+
+// ----restriction operation----//
+
+
+diagram restriction::apply() {
+    struct applier_true : public boost::static_visitor<diagram>
+    {
+        applier_true(oxm::field<> f) : f(f) { }
+
+        diagram operator()(const leaf& l) const {
+            return node{f, l, leaf{}};
+        }
+
+        diagram operator()(const node& n) const {
+            if (n.field == f) {
+                return node{f, n.positive, leaf{}};
+            } else if (n.field.type() == f.type()) {
+                return boost::apply_visitor(*this, n.negative);
+            } else if (compare_types(f.type(), n.field.type()) > 0) {
+                return node{f, n, leaf{}};
+            } else {
+                diagram positive = boost::apply_visitor(*this, n.positive);
+                diagram negative = boost::apply_visitor(*this, n.negative);
+                return node{n.field, positive, negative};
+            }
+        }
+        const oxm::field<> &f;
+    };
+
+    struct applier_false : public boost::static_visitor<diagram>
+    {
+        applier_false(oxm::field<> f) : f(f) { }
+
+        diagram operator()(const leaf& l) const {
+            return node{f, leaf{}, l};
+        }
+
+        diagram operator()(const node& n) const {
+            if (n.field == f) {
+                return node{f, leaf{}, n.negative};
+            } else if (n.field.type() == f.type()) {
+                if (n.field.value_bits() < f.value_bits()) {
+                    return node{n.field, n.positive, boost::apply_visitor(*this, n.negative)};
+                } else {
+                    return node{f, leaf{}, n};
+                }
+            } else if (compare_types(f.type(), n.field.type()) > 0) {
+                return node{f, leaf{}, n};
+            } else {
+                diagram positive = boost::apply_visitor(*this, n.positive);
+                diagram negative = boost::apply_visitor(*this, n.negative);
+                return node{n.field, positive, negative};
+            }
+        }
+        const oxm::field<> &f;
+    };
+    if (test) {
+        return boost::apply_visitor(applier_true(field), d);
+    } else {
+        return boost::apply_visitor(applier_false(field), d);
+    }
+}
 
 //=============== Operators =======================//
 

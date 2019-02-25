@@ -228,5 +228,205 @@ TEST(FddTest, ParallelNodeNodeDiffFields) {
 
     EXPECT_EQ(true_value, result_value1);
     EXPECT_EQ(true_value, result_value2);
+}
 
+
+TEST(FddTest, RestrictionLeafTrue) {
+    fdd::diagram d = fdd::leaf{{oxm::field_set{F<2>() == 2}}};
+    auto r = fdd::restriction{ F<1>() == 1, d, true };
+    fdd::diagram true_value = fdd::node {
+        F<1>() == 1,
+        fdd::leaf{{oxm::field_set{F<2>() == 2}}},
+        fdd::leaf{}
+    };
+    EXPECT_EQ(true_value, r.apply());
+}
+
+TEST(FddTest, RestrictionNodeEqualTrue) {
+    fdd::diagram d = fdd::node {
+        F<1>() == 1,
+        fdd::leaf{{oxm::field_set{F<2>() == 2}}},
+        fdd::leaf{{oxm::field_set{F<3>() == 3}}}
+    };
+
+
+    auto r = fdd::restriction{ F<1>() == 1, d, true };
+    fdd::diagram true_value = fdd::node {
+        F<1>() == 1,
+        fdd::leaf{{oxm::field_set{F<2>() == 2}}},
+        fdd::leaf{}
+    };
+    EXPECT_EQ(true_value, r.apply());
+}
+
+TEST(FddTest, RestrictionNodeEqualTypesTrue) {
+    fdd::diagram d = fdd::node {
+        F<1>() == 2,
+        fdd::leaf{{oxm::field_set{F<2>() == 2}}},
+        fdd::leaf{{oxm::field_set{F<3>() == 3}}}
+    };
+
+    auto r = fdd::restriction{ F<1>() == 1, d, true };
+    fdd::diagram true_value = fdd::node {
+        F<1>() == 1,
+        fdd::leaf{{oxm::field_set{F<3>() == 3}}},
+        fdd::leaf{}
+    };
+    EXPECT_EQ(true_value, r.apply());
+}
+
+TEST(FddTest, RestrictionNodeDiffTypes1Less2True) {
+    fdd::diagram d = fdd::node {
+        F<2>() == 2,
+        fdd::leaf{{oxm::field_set{F<2>() == 2}}},
+        fdd::leaf{{oxm::field_set{F<3>() == 3}}}
+    };
+
+    auto r = fdd::restriction{ F<1>() == 1, d, true };
+    fdd::diagram true_value = fdd::node {
+        F<1>() == 1,
+        fdd::node {
+            F<2>() == 2,
+            fdd::leaf{{oxm::field_set{F<2>() == 2}}},
+            fdd::leaf{{oxm::field_set{F<3>() == 3}}}
+        },
+        fdd::leaf{}
+    };
+    EXPECT_EQ(true_value, r.apply());
+}
+
+TEST(FddTest, RestrictionNodeOtherwiseTrue) {
+    fdd::diagram d = fdd::node {
+        F<1>() == 1,
+        fdd::leaf{{oxm::field_set{F<2>() == 2}}},
+        fdd::leaf{{oxm::field_set{F<3>() == 3}}}
+    };
+
+    auto r = fdd::restriction{ F<2>() == 2, d, true };
+    fdd::diagram true_value = fdd::node {
+        F<1>() == 1,
+        fdd::node {
+            F<2>() == 2,
+            fdd::leaf{{oxm::field_set{F<2>() == 2}}},
+            fdd::leaf{}
+        },
+        fdd::node {
+            F<2>() == 2,
+            fdd::leaf{{oxm::field_set{F<3>() == 3}}},
+            fdd::leaf{}
+        },
+    };
+    EXPECT_EQ(true_value, r.apply());
+}
+
+TEST(FddTest, RestrictionLeafFalse) {
+    fdd::diagram d = fdd::leaf{{oxm::field_set{F<2>() == 2}}};
+    auto r = fdd::restriction{ F<1>() == 1, d, false };
+    fdd::diagram true_value = fdd::node {
+        F<1>() == 1,
+        fdd::leaf{},
+        fdd::leaf{{oxm::field_set{F<2>() == 2}}}
+    };
+    EXPECT_EQ(true_value, r.apply());
+}
+
+TEST(FddTest, RestrictionNodeEqualFalse) {
+    fdd::diagram d = fdd::node {
+        F<1>() == 1,
+        fdd::leaf{{oxm::field_set{F<2>() == 2}}},
+        fdd::leaf{{oxm::field_set{F<3>() == 3}}}
+    };
+
+
+    auto r = fdd::restriction{ F<1>() == 1, d, false };
+    fdd::diagram true_value = fdd::node {
+        F<1>() == 1,
+        fdd::leaf{},
+        fdd::leaf{{oxm::field_set{F<3>() == 3}}}
+    };
+    EXPECT_EQ(true_value, r.apply());
+}
+
+TEST(FddTest, RestrictionNodeEqualTypesFalseOrdering1) {
+    fdd::diagram d = fdd::node {
+        F<1>() == 2,
+        fdd::leaf{{oxm::field_set{F<2>() == 2}}},
+        fdd::leaf{{oxm::field_set{F<3>() == 3}}}
+    };
+
+    auto r = fdd::restriction{ F<1>() == 1, d, false };
+    fdd::diagram true_value = fdd::node {
+        F<1>() == 1,
+        fdd::leaf{},
+        fdd::node {
+            F<1>() == 2,
+            fdd::leaf{{oxm::field_set{F<2>() == 2}}},
+            fdd::leaf{{oxm::field_set{F<3>() == 3}}}
+        }
+    };
+    EXPECT_EQ(true_value, r.apply());
+}
+
+TEST(FddTest, RestrictionNodeEqualTypesFalseOrdering2) {
+    fdd::diagram d = fdd::node {
+        F<1>() == 1,
+        fdd::leaf{{oxm::field_set{F<2>() == 2}}},
+        fdd::leaf{{oxm::field_set{F<3>() == 3}}}
+    };
+
+    auto r = fdd::restriction{ F<1>() == 2, d, false };
+    fdd::diagram true_value = fdd::node {
+        F<1>() == 1,
+        fdd::leaf{{oxm::field_set{F<2>() == 2}}},
+        fdd::node {
+            F<1>() == 2,
+            fdd::leaf{},
+            fdd::leaf{{oxm::field_set{F<3>() == 3}}}
+        }
+    };
+    EXPECT_EQ(true_value, r.apply());
+}
+
+TEST(FddTest, RestrictionNodeDiffTypesFalseOrdering1) {
+    fdd::diagram d = fdd::node {
+        F<2>() == 2,
+        fdd::leaf{{oxm::field_set{F<2>() == 2}}},
+        fdd::leaf{{oxm::field_set{F<3>() == 3}}}
+    };
+
+    auto r = fdd::restriction{ F<1>() == 1, d, false };
+    fdd::diagram true_value = fdd::node {
+        F<1>() == 1,
+        fdd::leaf{},
+        fdd::node {
+            F<2>() == 2,
+            fdd::leaf{{oxm::field_set{F<2>() == 2}}},
+            fdd::leaf{{oxm::field_set{F<3>() == 3}}}
+        }
+    };
+    EXPECT_EQ(true_value, r.apply());
+}
+
+TEST(FddTest, RestrictionNodeDiffTypesFalseOrdering2) {
+    fdd::diagram d = fdd::node {
+        F<1>() == 1,
+        fdd::leaf{{oxm::field_set{F<2>() == 2}}},
+        fdd::leaf{{oxm::field_set{F<3>() == 3}}}
+    };
+
+    auto r = fdd::restriction{ F<2>() == 2, d, false };
+    fdd::diagram true_value = fdd::node {
+        F<1>() == 1,
+        fdd::node {
+            F<2>() == 2,
+            fdd::leaf{},
+            fdd::leaf{{oxm::field_set{F<2>() == 2}}}
+        },
+        fdd::node {
+            F<2>() == 2,
+            fdd::leaf{},
+            fdd::leaf{{oxm::field_set{F<3>() == 3}}}
+        }
+    };
+    EXPECT_EQ(true_value, r.apply());
 }
