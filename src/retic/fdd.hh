@@ -42,12 +42,12 @@ public:
 
 class Compiler: public boost::static_visitor<diagram> {
 public:
-    diagram operator()(const Filter& fil);
-    diagram operator()(const Modify& mod);
-    diagram operator()(const Stop& stop);
-    diagram operator()(const Sequential&);
-    diagram operator()(const Parallel&);
-    diagram operator()(const PacketFunction&);
+    diagram operator()(const Filter& fil) const;
+    diagram operator()(const Modify& mod) const;
+    diagram operator()(const Stop& stop) const;
+    diagram operator()(const Sequential&) const;
+    diagram operator()(const Parallel&) const;
+    diagram operator()(const PacketFunction&) const;
 };
 
 diagram compile(const policy&);
@@ -60,18 +60,27 @@ int compare_types(const oxm::type lhs, oxm::type rhs);
 
 struct parallel_composition: public boost::static_visitor<diagram>
 {
-    diagram operator()(const leaf& lhs, const leaf& rhs);
-    diagram operator()(const node& lhs, const leaf& rhs);
-    diagram operator()(const leaf& lhs, const node& rhs);
-    diagram operator()(const node&, const node&);
+    diagram operator()(const leaf& lhs, const leaf& rhs) const;
+    diagram operator()(const node& lhs, const leaf& rhs) const;
+    diagram operator()(const leaf& lhs, const node& rhs) const;
+    diagram operator()(const node&, const node&) const;
 };
 
 struct sequential_composition: public boost::static_visitor<diagram>
 {
-    diagram operator()(const leaf& lhs, const leaf& rhs);
-    diagram operator()(const node& lhs, const leaf& rhs);
-    diagram operator()(const leaf& lhs, const node& rhs);
-    diagram operator()(const node&, const node&);
+    diagram operator()(const leaf& lhs, const diagram& rhs) const;
+    diagram operator()(const node& lhs, const leaf& rhs) const;
+    diagram operator()(const node&, const node&) const;
+private:
+    struct left_action_applier: public boost::static_visitor<diagram>
+    {
+        left_action_applier(oxm::field_set action): action(action)
+        { }
+        oxm::field_set action;
+
+        diagram operator()(const leaf& l) const;
+        diagram operator()(const node& n) const;
+    };
 };
 
 } // namespace fdd
