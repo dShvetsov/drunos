@@ -69,8 +69,7 @@ struct parallel_composition: public boost::static_visitor<diagram>
 struct sequential_composition: public boost::static_visitor<diagram>
 {
     diagram operator()(const leaf& lhs, const diagram& rhs) const;
-    diagram operator()(const node& lhs, const leaf& rhs) const;
-    diagram operator()(const node&, const node&) const;
+    diagram operator()(const node& lhs, const diagram& rhs) const;
 private:
     struct left_action_applier: public boost::static_visitor<diagram>
     {

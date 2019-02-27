@@ -122,14 +122,14 @@ diagram sequential_composition::operator()(const leaf& lhs, const diagram& rhs) 
     return result;
 }
 
-diagram sequential_composition::operator()(const node& lhs, const leaf& rhs) const
+diagram sequential_composition::operator()(const node& lhs, const diagram& rhs) const
 {
-    throw std::runtime_error("Not implemented");
-}
-
-diagram sequential_composition::operator()(const node& lhs, const node& rhs) const
-{
-    throw std::runtime_error("Not implemented");
+    diagram one = boost::apply_visitor(*this, lhs.positive, rhs);
+    diagram two = boost::apply_visitor(*this, lhs.negative, rhs);
+    diagram one_restricted = restriction{lhs.field, one, true}.apply();
+    diagram two_restricted = restriction{lhs.field, two, false}.apply();
+    parallel_composition parallel;
+    return boost::apply_visitor(parallel, one_restricted, two_restricted);
 }
 
 diagram sequential_composition::left_action_applier::operator()(const leaf& l) const {
@@ -144,7 +144,18 @@ diagram sequential_composition::left_action_applier::operator()(const leaf& l) c
 }
 
 diagram sequential_composition::left_action_applier::operator()(const node& n) const {
-    throw std::runtime_error("Not implemented");
+    auto it = action.find(n.field.type());
+    if (it == action.end()) {
+        diagram positive = boost::apply_visitor(*this, n.positive);
+        diagram negative = boost::apply_visitor(*this, n.negative);
+        return node{n.field, positive, negative};
+    }
+    else if (*it == n.field) {
+        return boost::apply_visitor(*this, n.positive);
+    } else {
+        // have this type, but other value
+        return boost::apply_visitor(*this, n.negative);
+    }
 }
 
 
@@ -242,7 +253,7 @@ std::ostream& operator<<(std::ostream& out, const leaf& rhs) {
     for (auto& i: rhs.sets) {
         out << "(" << i << ") ";
     }
-    out << " ]";
+    out << "]";
     return out;
 }
 

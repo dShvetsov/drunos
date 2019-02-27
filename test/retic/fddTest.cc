@@ -430,3 +430,204 @@ TEST(FddTest, RestrictionNodeDiffTypesFalseOrdering2) {
     };
     EXPECT_EQ(true_value, r.apply());
 }
+
+TEST(FddTest, SequentialLeafLeaf) {
+    fdd::diagram d1 = fdd::leaf {{
+        oxm::field_set{F<1>() == 1}
+    }};
+
+    fdd::diagram d2 = fdd::leaf {{
+        oxm::field_set{F<2>() == 2}
+    }};
+
+    fdd::sequential_composition composition;
+    fdd::diagram result = boost::apply_visitor(composition, d1,  d2);
+    fdd::diagram true_value = fdd::leaf {{
+        oxm::field_set{
+            {F<1>() == 1},
+            {F<2>() == 2}
+        }
+    }};
+    EXPECT_EQ(true_value, result);
+}
+
+TEST(FddTest, SequentialLeafLeafOneField) {
+    fdd::diagram d1 = fdd::leaf {{
+        oxm::field_set{F<1>() == 1}
+    }};
+
+    fdd::diagram d2 = fdd::leaf {{
+        oxm::field_set{F<1>() == 2}
+    }};
+
+    fdd::sequential_composition composition;
+    fdd::diagram result = boost::apply_visitor(composition, d1,  d2);
+    fdd::diagram true_value = fdd::leaf {{
+        oxm::field_set{
+            {F<1>() == 2}
+        }
+    }};
+    EXPECT_EQ(true_value, result);
+}
+
+TEST(FddTest, SequentialLeafLeafMulti) {
+    fdd::diagram d1 = fdd::leaf {{
+        oxm::field_set{F<1>() == 1},
+        oxm::field_set{F<3>() == 3},
+        oxm::field_set{F<4>() == 4}
+    }};
+
+    fdd::diagram d2 = fdd::leaf {{
+        oxm::field_set{F<2>() == 2},
+        oxm::field_set{F<3>() == 300},
+    }};
+
+    fdd::sequential_composition composition;
+    fdd::diagram result = boost::apply_visitor(composition, d1,  d2);
+    fdd::diagram true_value = fdd::leaf {{
+        oxm::field_set{
+            {F<1>() == 1},
+            {F<2>() == 2}
+        },
+        oxm::field_set{
+            {F<1>() == 1},
+            {F<3>() == 300}
+        },
+        oxm::field_set{
+            {F<3>() == 3},
+            {F<2>() == 2}
+        },
+        oxm::field_set{
+            {F<3>() == 300}
+        },
+        oxm::field_set{
+            {F<4>() == 4},
+            {F<2>() == 2}
+        },
+        oxm::field_set{
+            {F<4>() == 4},
+            {F<3>() == 300}
+        }
+    }};
+    EXPECT_EQ(true_value, result);
+}
+
+TEST(FddTest, SequentialLeafNodeWriteThisValue) {
+    fdd::diagram d1 = fdd::leaf{{
+        oxm::field_set{F<1>() == 1}
+    }};
+
+    fdd::diagram d2 = fdd::node{
+        F<1>() == 1,
+        fdd::leaf{{oxm::field_set{F<2>() == 2}}},
+        fdd::leaf{{oxm::field_set{F<3>() == 3}}}
+    };
+
+    fdd::diagram result = boost::apply_visitor(fdd::sequential_composition{}, d1, d2);
+
+    fdd::diagram true_value = fdd::leaf {{
+        oxm::field_set{
+            {F<1>() == 1},
+            {F<2>() == 2}
+        }
+    }};
+    EXPECT_EQ(true_value, result);
+
+}
+
+TEST(FddTest, SequentialLeafNodeWriteAnotherValue) {
+    fdd::diagram d1 = fdd::leaf{{
+        oxm::field_set{F<1>() == 100}
+    }};
+
+    fdd::diagram d2 = fdd::node{
+        F<1>() == 1,
+        fdd::leaf{{oxm::field_set{F<2>() == 2}}},
+        fdd::leaf{{oxm::field_set{F<3>() == 3}}}
+    };
+
+    fdd::diagram result = boost::apply_visitor(fdd::sequential_composition{}, d1, d2);
+
+    fdd::diagram true_value = fdd::leaf {{
+        oxm::field_set{
+            {F<1>() == 100},
+            {F<3>() == 3}
+        }
+    }};
+    EXPECT_EQ(true_value, result);
+}
+
+TEST(FddTest, SequentialLeafNodeWriteAnotherType) {
+    fdd::diagram d1 = fdd::leaf{{
+        oxm::field_set{F<100>() == 100}
+    }};
+
+    fdd::diagram d2 = fdd::node{
+        F<1>() == 1,
+        fdd::leaf{{oxm::field_set{F<2>() == 2}}},
+        fdd::leaf{{oxm::field_set{F<3>() == 3}}}
+    };
+
+    fdd::diagram result = boost::apply_visitor(fdd::sequential_composition{}, d1, d2);
+
+    fdd::diagram true_value = fdd::node{
+        F<1>() == 1,
+        fdd::leaf{{
+            oxm::field_set{ {F<2>() == 2}, {F<100>() == 100} }
+        }},
+        fdd::leaf{{
+            oxm::field_set{ {F<3>() == 3}, {F<100>() == 100} }
+        }}
+    };
+    EXPECT_EQ(true_value, result);
+}
+
+TEST(FddTest, SequentialNodeLeaf) {
+    fdd::diagram d1 = fdd::node{
+        F<1>() == 1,
+        fdd::leaf{{oxm::field_set{F<2>() == 2}}},
+        fdd::leaf{{oxm::field_set{F<3>() == 3}}}
+    };
+
+    fdd::diagram d2 = fdd::leaf{{
+        oxm::field_set{F<100>() == 100}
+    }};
+
+    fdd::diagram result = boost::apply_visitor(fdd::sequential_composition{}, d1, d2);
+
+    fdd::diagram true_value = fdd::node{
+        F<1>() == 1,
+        fdd::leaf{{
+            oxm::field_set{ {F<2>() == 2}, {F<100>() == 100} }
+        }},
+        fdd::leaf{{
+            oxm::field_set{ {F<3>() == 3}, {F<100>() == 100} }
+        }}
+    };
+    EXPECT_EQ(true_value, result);
+}
+
+TEST(FddTest, CompileSequential) {
+    policy p = modify(F<1>() == 1) >> modify(F<2>() == 2);
+    fdd::diagram result = fdd::compile(p);
+    fdd::diagram true_value = fdd::leaf{{
+        oxm::field_set{ {F<1>() == 1}, {F<2>() == 2} }
+    }};
+    EXPECT_EQ(true_value, result);
+}
+
+TEST(FddTest, CompileParallel) {
+    policy p = modify(F<1>() == 1) + modify(F<2>() == 2);
+    fdd::diagram result = fdd::compile(p);
+    fdd::diagram true_value = fdd::leaf{{
+        oxm::field_set{F<1>() == 1},
+        oxm::field_set{F<2>() == 2}
+    }};
+    EXPECT_EQ(true_value, result);
+}
+
+TEST(DISABLED_FddTest, CompilePacketFunction) {
+    policy p = handler([](Packet& pkt){ return stop(); });
+    fdd::diagram result = fdd::compile(p);
+    EXPECT_TRUE(false) << "You need implement it!";
+}
