@@ -2,6 +2,7 @@
 #include <gmock/gmock.h>
 
 #include "retic/fdd.hh"
+#include "retic/fdd_compiler.hh"
 #include "retic/policies.hh"
 #include "oxm/openflow_basic.hh"
 
@@ -46,14 +47,14 @@ TEST(EqualFdd, EqualTest) {
 }
 
 
-TEST(FddTest, StopCompile) {
+TEST(FddCompilerTest, StopCompile) {
     policy p = stop();
     fdd::diagram diagram = fdd::compile(p);
     fdd::leaf leaf = boost::get<fdd::leaf>(diagram);
     ASSERT_TRUE(leaf.sets.empty());
 }
 
-TEST(FddTest, Modify) {
+TEST(FddCompilerTest, Modify) {
     policy p = modify(F<1>() << 100);
     fdd::diagram diagram = fdd::compile(p);
     fdd::leaf leaf = boost::get<fdd::leaf>(diagram);
@@ -61,7 +62,7 @@ TEST(FddTest, Modify) {
     ASSERT_EQ(oxm::field_set{F<1>() == 100}, leaf.sets[0]);
 }
 
-TEST(FddTest, Filter) {
+TEST(FddCompilerTest, Filter) {
     policy p = filter(F<1>() == 100);
     fdd::diagram diagram = fdd::compile(p);
     fdd::node node = boost::get<fdd::node>(diagram);
@@ -75,7 +76,7 @@ TEST(FddTest, Filter) {
 
 }
 
-TEST(FddTest, ParallelLeafLeaf) {
+TEST(FddCompilerTest, ParallelLeafLeaf) {
     policy p = modify(F<1>() << 100) + modify(F<2>() << 200);
     fdd::diagram diagram = fdd::compile(p);
     fdd::leaf leaf = boost::get<fdd::leaf>(diagram);
@@ -87,7 +88,7 @@ TEST(FddTest, ParallelLeafLeaf) {
         ));
 }
 
-TEST(FddTest, ParallellNodeLeaf) {
+TEST(FddCompilerTest, ParallellNodeLeaf) {
     policy p = filter(F<1>() == 1) + modify(F<3>() << 3);
     fdd::diagram diagram = fdd::compile(p);
     fdd::node node = boost::get<fdd::node>(diagram);
@@ -102,7 +103,7 @@ TEST(FddTest, ParallellNodeLeaf) {
     EXPECT_THAT(neg.sets, UnorderedElementsAre(oxm::field_set{F<3>() == 3}));
 }
 
-TEST(FddTest, ParallellLeafNode) {
+TEST(FddCompilerTest, ParallellLeafNode) {
     policy p = modify(F<3>() << 3) + filter(F<1>() == 1);
     fdd::diagram diagram = fdd::compile(p);
     fdd::node node = boost::get<fdd::node>(diagram);
@@ -117,7 +118,7 @@ TEST(FddTest, ParallellLeafNode) {
     EXPECT_THAT(neg.sets, UnorderedElementsAre(oxm::field_set{F<3>() == 3}));
 }
 
-TEST(FddTest, ParallelNodeNodeEquals) {
+TEST(FddCompilerTest, ParallelNodeNodeEquals) {
     fdd::diagram node1 = fdd::node{
             {F<1>() == 1},
             fdd::leaf{{oxm::field_set{F<2>() == 2}}},
@@ -144,7 +145,7 @@ TEST(FddTest, ParallelNodeNodeEquals) {
     ));
 }
 
-TEST(FddTest, ParallelNodeNodeEqualFields) {
+TEST(FddCompilerTest, ParallelNodeNodeEqualFields) {
     fdd::diagram node1 = fdd::node{
             {F<1>() == 1},
             fdd::leaf{{oxm::field_set{F<2>() == 2}}},
@@ -184,7 +185,7 @@ TEST(FddTest, ParallelNodeNodeEqualFields) {
 
 }
 
-TEST(FddTest, ParallelNodeNodeDiffFields) {
+TEST(FddCompilerTest, ParallelNodeNodeDiffFields) {
     fdd::diagram node1 = fdd::node{
             {F<1>() == 1},
             fdd::leaf{{oxm::field_set{F<2>() == 2}}},
@@ -231,7 +232,7 @@ TEST(FddTest, ParallelNodeNodeDiffFields) {
 }
 
 
-TEST(FddTest, RestrictionLeafTrue) {
+TEST(FddCompilerTest, RestrictionLeafTrue) {
     fdd::diagram d = fdd::leaf{{oxm::field_set{F<2>() == 2}}};
     auto r = fdd::restriction{ F<1>() == 1, d, true };
     fdd::diagram true_value = fdd::node {
@@ -242,7 +243,7 @@ TEST(FddTest, RestrictionLeafTrue) {
     EXPECT_EQ(true_value, r.apply());
 }
 
-TEST(FddTest, RestrictionNodeEqualTrue) {
+TEST(FddCompilerTest, RestrictionNodeEqualTrue) {
     fdd::diagram d = fdd::node {
         F<1>() == 1,
         fdd::leaf{{oxm::field_set{F<2>() == 2}}},
@@ -259,7 +260,7 @@ TEST(FddTest, RestrictionNodeEqualTrue) {
     EXPECT_EQ(true_value, r.apply());
 }
 
-TEST(FddTest, RestrictionNodeEqualTypesTrue) {
+TEST(FddCompilerTest, RestrictionNodeEqualTypesTrue) {
     fdd::diagram d = fdd::node {
         F<1>() == 2,
         fdd::leaf{{oxm::field_set{F<2>() == 2}}},
@@ -275,7 +276,7 @@ TEST(FddTest, RestrictionNodeEqualTypesTrue) {
     EXPECT_EQ(true_value, r.apply());
 }
 
-TEST(FddTest, RestrictionNodeDiffTypes1Less2True) {
+TEST(FddCompilerTest, RestrictionNodeDiffTypes1Less2True) {
     fdd::diagram d = fdd::node {
         F<2>() == 2,
         fdd::leaf{{oxm::field_set{F<2>() == 2}}},
@@ -295,7 +296,7 @@ TEST(FddTest, RestrictionNodeDiffTypes1Less2True) {
     EXPECT_EQ(true_value, r.apply());
 }
 
-TEST(FddTest, RestrictionNodeOtherwiseTrue) {
+TEST(FddCompilerTest, RestrictionNodeOtherwiseTrue) {
     fdd::diagram d = fdd::node {
         F<1>() == 1,
         fdd::leaf{{oxm::field_set{F<2>() == 2}}},
@@ -319,7 +320,7 @@ TEST(FddTest, RestrictionNodeOtherwiseTrue) {
     EXPECT_EQ(true_value, r.apply());
 }
 
-TEST(FddTest, RestrictionLeafFalse) {
+TEST(FddCompilerTest, RestrictionLeafFalse) {
     fdd::diagram d = fdd::leaf{{oxm::field_set{F<2>() == 2}}};
     auto r = fdd::restriction{ F<1>() == 1, d, false };
     fdd::diagram true_value = fdd::node {
@@ -330,7 +331,7 @@ TEST(FddTest, RestrictionLeafFalse) {
     EXPECT_EQ(true_value, r.apply());
 }
 
-TEST(FddTest, RestrictionNodeEqualFalse) {
+TEST(FddCompilerTest, RestrictionNodeEqualFalse) {
     fdd::diagram d = fdd::node {
         F<1>() == 1,
         fdd::leaf{{oxm::field_set{F<2>() == 2}}},
@@ -347,7 +348,7 @@ TEST(FddTest, RestrictionNodeEqualFalse) {
     EXPECT_EQ(true_value, r.apply());
 }
 
-TEST(FddTest, RestrictionNodeEqualTypesFalseOrdering1) {
+TEST(FddCompilerTest, RestrictionNodeEqualTypesFalseOrdering1) {
     fdd::diagram d = fdd::node {
         F<1>() == 2,
         fdd::leaf{{oxm::field_set{F<2>() == 2}}},
@@ -367,7 +368,7 @@ TEST(FddTest, RestrictionNodeEqualTypesFalseOrdering1) {
     EXPECT_EQ(true_value, r.apply());
 }
 
-TEST(FddTest, RestrictionNodeEqualTypesFalseOrdering2) {
+TEST(FddCompilerTest, RestrictionNodeEqualTypesFalseOrdering2) {
     fdd::diagram d = fdd::node {
         F<1>() == 1,
         fdd::leaf{{oxm::field_set{F<2>() == 2}}},
@@ -387,7 +388,7 @@ TEST(FddTest, RestrictionNodeEqualTypesFalseOrdering2) {
     EXPECT_EQ(true_value, r.apply());
 }
 
-TEST(FddTest, RestrictionNodeDiffTypesFalseOrdering1) {
+TEST(FddCompilerTest, RestrictionNodeDiffTypesFalseOrdering1) {
     fdd::diagram d = fdd::node {
         F<2>() == 2,
         fdd::leaf{{oxm::field_set{F<2>() == 2}}},
@@ -407,7 +408,7 @@ TEST(FddTest, RestrictionNodeDiffTypesFalseOrdering1) {
     EXPECT_EQ(true_value, r.apply());
 }
 
-TEST(FddTest, RestrictionNodeDiffTypesFalseOrdering2) {
+TEST(FddCompilerTest, RestrictionNodeDiffTypesFalseOrdering2) {
     fdd::diagram d = fdd::node {
         F<1>() == 1,
         fdd::leaf{{oxm::field_set{F<2>() == 2}}},
@@ -431,7 +432,7 @@ TEST(FddTest, RestrictionNodeDiffTypesFalseOrdering2) {
     EXPECT_EQ(true_value, r.apply());
 }
 
-TEST(FddTest, SequentialLeafLeaf) {
+TEST(FddCompilerTest, SequentialLeafLeaf) {
     fdd::diagram d1 = fdd::leaf {{
         oxm::field_set{F<1>() == 1}
     }};
@@ -451,7 +452,7 @@ TEST(FddTest, SequentialLeafLeaf) {
     EXPECT_EQ(true_value, result);
 }
 
-TEST(FddTest, SequentialLeafLeafOneField) {
+TEST(FddCompilerTest, SequentialLeafLeafOneField) {
     fdd::diagram d1 = fdd::leaf {{
         oxm::field_set{F<1>() == 1}
     }};
@@ -470,7 +471,7 @@ TEST(FddTest, SequentialLeafLeafOneField) {
     EXPECT_EQ(true_value, result);
 }
 
-TEST(FddTest, SequentialLeafLeafMulti) {
+TEST(FddCompilerTest, SequentialLeafLeafMulti) {
     fdd::diagram d1 = fdd::leaf {{
         oxm::field_set{F<1>() == 1},
         oxm::field_set{F<3>() == 3},
@@ -512,7 +513,7 @@ TEST(FddTest, SequentialLeafLeafMulti) {
     EXPECT_EQ(true_value, result);
 }
 
-TEST(FddTest, SequentialLeafNodeWriteThisValue) {
+TEST(FddCompilerTest, SequentialLeafNodeWriteThisValue) {
     fdd::diagram d1 = fdd::leaf{{
         oxm::field_set{F<1>() == 1}
     }};
@@ -535,7 +536,7 @@ TEST(FddTest, SequentialLeafNodeWriteThisValue) {
 
 }
 
-TEST(FddTest, SequentialLeafNodeWriteAnotherValue) {
+TEST(FddCompilerTest, SequentialLeafNodeWriteAnotherValue) {
     fdd::diagram d1 = fdd::leaf{{
         oxm::field_set{F<1>() == 100}
     }};
@@ -557,7 +558,7 @@ TEST(FddTest, SequentialLeafNodeWriteAnotherValue) {
     EXPECT_EQ(true_value, result);
 }
 
-TEST(FddTest, SequentialLeafNodeWriteAnotherType) {
+TEST(FddCompilerTest, SequentialLeafNodeWriteAnotherType) {
     fdd::diagram d1 = fdd::leaf{{
         oxm::field_set{F<100>() == 100}
     }};
@@ -582,7 +583,7 @@ TEST(FddTest, SequentialLeafNodeWriteAnotherType) {
     EXPECT_EQ(true_value, result);
 }
 
-TEST(FddTest, SequentialNodeLeaf) {
+TEST(FddCompilerTest, SequentialNodeLeaf) {
     fdd::diagram d1 = fdd::node{
         F<1>() == 1,
         fdd::leaf{{oxm::field_set{F<2>() == 2}}},
@@ -607,7 +608,7 @@ TEST(FddTest, SequentialNodeLeaf) {
     EXPECT_EQ(true_value, result);
 }
 
-TEST(FddTest, CompileSequential) {
+TEST(FddCompilerTest, CompileSequential) {
     policy p = modify(F<1>() == 1) >> modify(F<2>() == 2);
     fdd::diagram result = fdd::compile(p);
     fdd::diagram true_value = fdd::leaf{{
@@ -616,7 +617,7 @@ TEST(FddTest, CompileSequential) {
     EXPECT_EQ(true_value, result);
 }
 
-TEST(FddTest, CompileParallel) {
+TEST(FddCompilerTest, CompileParallel) {
     policy p = modify(F<1>() == 1) + modify(F<2>() == 2);
     fdd::diagram result = fdd::compile(p);
     fdd::diagram true_value = fdd::leaf{{
@@ -626,7 +627,7 @@ TEST(FddTest, CompileParallel) {
     EXPECT_EQ(true_value, result);
 }
 
-TEST(DISABLED_FddTest, CompilePacketFunction) {
+TEST(DISABLED_FddCompilerTest, CompilePacketFunction) {
     policy p = handler([](Packet& pkt){ return stop(); });
     fdd::diagram result = fdd::compile(p);
     EXPECT_TRUE(false) << "You need implement it!";

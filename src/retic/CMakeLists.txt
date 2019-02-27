@@ -2,7 +2,12 @@ set(CMAKE_AUTOMOC OFF)
 
 set(SOURCES
     fdd.hh
-    fdd.cc
+    applier.hh
+    dumper.hh
+    fdd_translation.hh
+    policies.hh
+    fdd_compiler.cc
+    fdd_compiler.hh
 )
 
 add_library(runos_retic STATIC ${SOURCES})
