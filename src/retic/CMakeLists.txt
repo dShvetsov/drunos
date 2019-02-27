@@ -4,7 +4,8 @@ set(SOURCES
     fdd.hh
     applier.hh
     dumper.hh
-    fdd_translation.hh
+    fdd_translator.hh
+    fdd_translator.cc
     policies.hh
     fdd_compiler.cc
     fdd_compiler.hh

@@ -4,6 +4,7 @@ add_executable(runReticTest
         reticTest.cc
         reticPacketParse.cc
         fddTest.cc
+        fddTranlatorTest.cc
 )
 
 target_link_libraries(runReticTest
