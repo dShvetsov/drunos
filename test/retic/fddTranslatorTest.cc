@@ -21,7 +21,7 @@ struct MockBackend: public Backend {
 
 using match = std::vector<oxm::field_set>;
 
-TEST(FddTranlation, TranslateEmpty) {
+TEST(FddTranslation, TranslateEmpty) {
     MockBackend backend;
     fdd::Translator tranlator(backend);
     fdd::diagram d = fdd::leaf{};
@@ -35,7 +35,7 @@ TEST(FddTranlation, TranslateEmpty) {
     boost::apply_visitor(tranlator, d);
 }
 
-TEST(FddTranlation, TranlateOneAction) {
+TEST(FddTranslation, TranslateOneAction) {
     MockBackend backend;
     EXPECT_CALL(backend,
         install(
@@ -49,7 +49,7 @@ TEST(FddTranlation, TranlateOneAction) {
     boost::apply_visitor(translator, d);
 }
 
-TEST(FddTranlation, TranlateSimpleNode) {
+TEST(FddTranslation, TranslateSimpleNode) {
     MockBackend backend;
     fdd::diagram d = fdd::node {
         F<1>() == 1,
