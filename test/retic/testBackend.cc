@@ -6,8 +6,6 @@
 #include "oxm/openflow_basic.hh"
 #include "oxm/field_set.hh"
 
-#include "openflow/openflow-1.3.5.h"
-
 #include "Retic.hh"
 #include "OFDriver.hh"
 
@@ -55,7 +53,7 @@ TEST(BackendTest, InstallSimpleRule) {
 
     Actions actions = {.out_port = 101, .set_fields = oxm::field_set{F<2>() == 2}};
 
-    EXPECT_CALL(*mock_driver, 
+    EXPECT_CALL(*mock_driver,
         installRule(oxm::field_set{F<1>() == 1}, 10, actions, 2));
 
     Of13Backend backend(drivers, 2);
@@ -75,7 +73,7 @@ TEST(BackendTest, NoActions) {
 
     Actions actions = {};
 
-    EXPECT_CALL(*mock_driver, 
+    EXPECT_CALL(*mock_driver,
         installRule(oxm::field_set{F<1>() == 1}, 10, actions, 2));
 
     Of13Backend backend(drivers, 2);

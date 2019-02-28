@@ -4,6 +4,9 @@
 #include "Common.hh"
 #include "oxm/openflow_basic.hh"
 #include "retic/applier.hh"
+#include "retic/fdd.hh"
+#include "retic/fdd_compiler.hh"
+#include "retic/fdd_translator.hh"
 #include "PacketParser.hh"
 
 REGISTER_APPLICATION(Retic, {"controller", ""})
@@ -13,34 +16,42 @@ using namespace runos;
 void Retic::init(Loader* loader, const Config& config)
 {
     auto ctrl = Controller::get(loader);
-    const auto ofb_in_port = oxm::in_port();
 
-    ctrl->registerHandler<of13::PacketIn>(
-            [=](of13::PacketIn& pi, SwitchConnectionPtr conn) {
-                LOG(INFO) << "Packet in";
-                uint8_t buffer[1500];
-                PacketParser pp { pi, conn->dpid() };
-                retic::Applier<PacketParser> runtime{pp};
-                boost::apply_visitor(runtime, m_policy);
-                auto& results = runtime.results();
-                for (auto& [p, meta]: results) {
-                    const Packet& pkt{p};
-                    of13::PacketOut po;
-                    po.xid(0x1234);
-                    po.buffer_id(OFP_NO_BUFFER);
-                    uint32_t out_port = pkt.load(oxm::out_port());
-                    LOG(WARNING) << "Output to " << out_port << " port";
-                    if (out_port != 0) {
-                        po.in_port(pkt.load(oxm::in_port()));
-                        po.add_action(new of13::OutputAction(out_port, 0));
-                        size_t len = p.total_bytes();
-                        p.serialize_to(sizeof(buffer), buffer);
-                        po.data(buffer, len);
-                        conn->send(po);
-                    }
-                }
-            }
-        );
+//    ctrl->registerHandler<of13::PacketIn>(
+//            [=](of13::PacketIn& pi, SwitchConnectionPtr conn) {
+//                LOG(INFO) << "Packet in";
+//                uint8_t buffer[1500];
+//                PacketParser pp { pi, conn->dpid() };
+//                retic::Applier<PacketParser> runtime{pp};
+//                boost::apply_visitor(runtime, m_policy);
+//                auto& results = runtime.results();
+//                for (auto& [p, meta]: results) {
+//                    const Packet& pkt{p};
+//                    of13::PacketOut po;
+//                    po.xid(0x1234);
+//                    po.buffer_id(OFP_NO_BUFFER);
+//                    uint32_t out_port = pkt.load(oxm::out_port());
+//                    LOG(WARNING) << "Output to " << out_port << " port";
+//                    if (out_port != 0) {
+//                        po.in_port(pkt.load(oxm::in_port()));
+//                        po.add_action(new of13::OutputAction(out_port, 0));
+//                        size_t len = p.total_bytes();
+//                        p.serialize_to(sizeof(buffer), buffer);
+//                        po.data(buffer, len);
+//                        conn->send(po);
+//                    }
+//                }
+//            }
+//        );
+}
+
+void Retic::onSwitchUp(SwitchConnectionPtr conn, of13::FeaturesReply fr) {
+    m_backend = nullptr;
+    m_drivers[conn->dpid()] = makeDriver(conn);
+    retic::fdd::diagram d = retic::fdd::compile(m_policy);
+    m_backend = std::make_unique<Of13Backend>(m_drivers, 0);
+    retic::fdd::Translator translator(*m_backend);
+    boost::apply_visitor(translator, d);
 }
 
 namespace runos {

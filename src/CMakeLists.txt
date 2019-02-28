@@ -21,6 +21,7 @@ set(SOURCES
     Maple.cc
     Retic.cc
     OFDriver.hh
+    OFDriver.cc
     # Apps
     SimpleLearningSwitch.cc
     LearningSwitch.cc
@@ -69,6 +70,7 @@ target_link_libraries(runos
 # runos_base
     runos_types
     runos_maple
+    runos_retic
     tcmalloc
     Qt5::Core
     fluid_base

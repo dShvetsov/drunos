@@ -4,6 +4,8 @@
 
 #include "oxm/field_set.hh"
 
+#include "SwitchConnectionFwd.hh"
+
 namespace runos {
 
 struct Actions {
@@ -42,4 +44,5 @@ public:
 
 using OFDriverPtr = std::shared_ptr<OFDriver>;
 
+OFDriverPtr makeDriver(SwitchConnectionPtr conn);
 } // namespace runos

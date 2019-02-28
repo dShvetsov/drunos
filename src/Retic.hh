@@ -1,6 +1,7 @@
 #pragma once
 
 #include <unordered_map>
+#include <memory>
 #include <variant>
 #include <vector>
 
@@ -9,15 +10,25 @@
 #include "retic/policies.hh"
 #include "retic/backend.hh"
 #include "OFDriver.hh"
+#include "SwitchConnection.hh"
+#include <fluid/of13msg.hh>
 
+namespace runos {
+    struct Of13Backend;
+}
 
 class Retic: public Application {
 SIMPLE_APPLICATION(Retic, "retic")
 public:
     void init(Loader* loader, const Config& config) override;
 
+public slots:
+    void onSwitchUp(runos::SwitchConnectionPtr conn, fluid_msg::of13::FeaturesReply fr);
+
 private:
     runos::retic::policy m_policy = runos::retic::fwd(3);
+    std::unordered_map<uint64_t, runos::OFDriverPtr> m_drivers;
+    std::unique_ptr<runos::Of13Backend> m_backend;
 };
 
 
