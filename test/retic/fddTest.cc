@@ -231,7 +231,6 @@ TEST(FddCompilerTest, ParallelNodeNodeDiffFields) {
     EXPECT_EQ(true_value, result_value2);
 }
 
-
 TEST(FddCompilerTest, RestrictionLeafTrue) {
     fdd::diagram d = fdd::leaf{{oxm::field_set{F<2>() == 2}}};
     auto r = fdd::restriction{ F<1>() == 1, d, true };

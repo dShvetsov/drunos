@@ -12,6 +12,7 @@ public:
         std::vector<oxm::field_set> action,
         uint16_t piority
     ) = 0;
+    virtual ~Backend() = default;
 };
 
 } // namespace retic

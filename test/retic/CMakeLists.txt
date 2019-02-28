@@ -5,14 +5,17 @@ add_executable(runReticTest
         reticPacketParse.cc
         fddTest.cc
         fddTranslatorTest.cc
+        testBackend.cc
 )
 
 target_link_libraries(runReticTest
     ${TEST_LINK_LIBRARIES}
-    libfluid_msg.a
     runos_base
     runos_types
+    runos_maple
     runos_retic
+    libfluid_msg.a
+    fluid_base
 )
 
 add_test(NAME runReticTest COMMAND runReticTest)
