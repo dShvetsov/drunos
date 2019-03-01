@@ -95,7 +95,11 @@ TEST(BackendTest, MultiActions) {
         {1, driver}
     };
 
-    GroupPtr group = std::make_shared<Group>(634);
+    struct FakeGroup: public Group {
+        uint32_t id() const override { return 634; }
+    };
+
+    GroupPtr group = std::make_shared<FakeGroup>();
 
     EXPECT_CALL(*mock_driver,
         installGroup(GroupType::All, UnorderedElementsAre(a1, a2))

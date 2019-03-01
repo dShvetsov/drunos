@@ -10,7 +10,7 @@ namespace runos {
 
 struct Actions {
     uint32_t out_port = 0;
-    uint16_t group_id = 0;
+    uint32_t group_id = 0;
     oxm::field_set set_fields;
     friend bool operator==(const Actions& lhs, const Actions& rhs) {
         return lhs.out_port == rhs.out_port && lhs.group_id == rhs.group_id && lhs.set_fields == rhs.set_fields;
@@ -22,10 +22,8 @@ class Rule {
 
 class Group {
 public:
-    Group(uint32_t id): m_id(id) { }
-    uint16_t id() { return m_id; }
-private:
-    uint16_t m_id;
+    virtual uint32_t id() const = 0;
+    virtual ~Group() = default;
 };
 
 enum class GroupType {

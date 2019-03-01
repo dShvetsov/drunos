@@ -93,7 +93,7 @@ private:
 class Fluid13Group: public Group {
 public:
     Fluid13Group(SwitchConnectionPtr conn, uint32_t id, GroupType type, std::vector<Actions> buckets)
-        : Group(id)
+        : m_id(id)
         , m_conn(conn)
         , m_type(type)
         , m_buckets(std::move(buckets))
@@ -105,8 +105,8 @@ public:
             of13::GroupMod gm;
             gm.commmand(of13::OFPGC_ADD);
             gm.group_type(of13::OFPGT_ALL);
-            gm.group_id(this->id());
-            for (auto& acts: buckets) {
+            for (auto& acts: m_buckets) {
+                LOG(INFO) << "  Bucket!";
                 of13::Bucket b;
                 b.watch_port(of13::OFPP_ANY);
                 b.watch_group(of13::OFPG_ANY);
@@ -114,8 +114,13 @@ public:
                 b.actions(action_set);
                 gm.add_bucket(b);
             }
+            gm.group_id(m_id);
             m_conn->send(gm);
         }
+    }
+
+    uint32_t id() const override {
+        return m_id;
     }
 
     ~Fluid13Group() {
@@ -123,12 +128,14 @@ public:
             of13::GroupMod gm;
             gm.commmand(of13::OFPGC_DELETE);
             gm.group_type(of13::OFPGT_ALL);
+            gm.group_id(m_id);
             m_conn->send(gm);
         }
 
     }
 
 private:
+    uint32_t m_id;
     SwitchConnectionPtr m_conn;
     GroupType m_type;
     std::vector<Actions> m_buckets;
@@ -143,6 +150,8 @@ public:
 
     RulePtr installRule(oxm::field_set match, uint16_t prio, Actions actions, uint8_t table) override {
 
+        LOG(INFO) << "Install rule with cookie: " << std::hex << m_cookie_gen;
+
         RulePtr ret = std::make_shared<Fluid13Rule>(
             m_conn,
             match,
@@ -155,6 +164,9 @@ public:
         return ret;
     }
     GroupPtr installGroup(GroupType type, std::vector<Actions> buckets) override {
+
+        LOG(INFO) << "Install group with id: " << std::hex << m_id_gen;
+
         GroupPtr ret = std::make_shared<Fluid13Group>(
             m_conn,
             m_id_gen,
@@ -166,7 +178,7 @@ public:
     }
 private:
     SwitchConnectionPtr m_conn;
-    uint32_t m_id_gen = 1;
+    uint16_t m_id_gen = 630;
     uint64_t m_cookie_gen = 0x400000000;
 };
 

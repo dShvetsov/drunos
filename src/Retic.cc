@@ -16,6 +16,7 @@ using namespace runos;
 void Retic::init(Loader* loader, const Config& config)
 {
     auto ctrl = Controller::get(loader);
+    QObject::connect(ctrl, &Controller::switchUp, this, &Retic::onSwitchUp);
 
 //    ctrl->registerHandler<of13::PacketIn>(
 //            [=](of13::PacketIn& pi, SwitchConnectionPtr conn) {
@@ -49,7 +50,7 @@ void Retic::onSwitchUp(SwitchConnectionPtr conn, of13::FeaturesReply fr) {
     m_backend = nullptr;
     m_drivers[conn->dpid()] = makeDriver(conn);
     retic::fdd::diagram d = retic::fdd::compile(m_policy);
-    m_backend = std::make_unique<Of13Backend>(m_drivers, 0);
+    m_backend = std::make_unique<Of13Backend>(m_drivers, 2);
     retic::fdd::Translator translator(*m_backend);
     boost::apply_visitor(translator, d);
 }
@@ -78,8 +79,7 @@ void Of13Backend::install_on(uint64_t dpid, oxm::field_set match, std::vector<ox
         // drop packet
         driver->installRule(match, prio, {}, m_table);
         return;
-    }
-
+    } 
     std::vector<Actions> buckets;
     buckets.reserve(actions.size());
     for (auto& action: actions) {
@@ -107,6 +107,7 @@ void Of13Backend::install_on(uint64_t dpid, oxm::field_set match, std::vector<ox
         // many actionlists, create Group
 
         auto group = driver->installGroup(GroupType::All, buckets);
+        m_storage.push_back(group);
         Actions to_group = {.group_id = group->id()};
         auto flow = driver->installRule(match, prio, to_group, m_table);
         m_storage.push_back(flow);
