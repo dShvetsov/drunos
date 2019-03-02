@@ -29,6 +29,7 @@ private:
     runos::retic::policy m_policy = runos::retic::fwd(2) + runos::retic::fwd(1);
     std::unordered_map<uint64_t, runos::OFDriverPtr> m_drivers;
     std::unique_ptr<runos::Of13Backend> m_backend;
+    uint8_t m_table;
 };
 
 

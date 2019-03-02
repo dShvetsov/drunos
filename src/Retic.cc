@@ -16,6 +16,7 @@ using namespace runos;
 void Retic::init(Loader* loader, const Config& config)
 {
     auto ctrl = Controller::get(loader);
+    m_table = ctrl->getTable("retic");
     QObject::connect(ctrl, &Controller::switchUp, this, &Retic::onSwitchUp);
 
 //    ctrl->registerHandler<of13::PacketIn>(
@@ -50,7 +51,7 @@ void Retic::onSwitchUp(SwitchConnectionPtr conn, of13::FeaturesReply fr) {
     m_backend = nullptr;
     m_drivers[conn->dpid()] = makeDriver(conn);
     retic::fdd::diagram d = retic::fdd::compile(m_policy);
-    m_backend = std::make_unique<Of13Backend>(m_drivers, 2);
+    m_backend = std::make_unique<Of13Backend>(m_drivers, m_table);
     retic::fdd::Translator translator(*m_backend);
     boost::apply_visitor(translator, d);
 }

@@ -20,8 +20,9 @@
     ],
 
     "tables": {
-        "static-flow-pusher" : 0,
-        "maple" : 1
+        "retic" : 0,
+        "static-flow-pusher" : 1,
+        "maple" : 2
     },
 
     "flow-manager" : {

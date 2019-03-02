@@ -18,7 +18,7 @@ public:
 private:
     Backend& m_backend;
     oxm::field_set match;
-    uint16_t priority = 0;
+    uint16_t priority = 1;
 };
 
 } // namespace fdd
