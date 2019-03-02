@@ -187,7 +187,7 @@ void RestMultipart::sendGetRequest(of13::MultipartRequestPortStats &&req,
 
     try {
         req.port_no(boost::lexical_cast<uint32_t>(port_number));
-    } catch (boost::bad_lexical_cast) {
+    } catch (boost::bad_lexical_cast&) {
         req.port_no(of13::OFPP_ANY);
     }
     req.flags(0);
@@ -275,7 +275,7 @@ void RestMultipart::sendGetRequest(of13::MultipartRequestQueue &&req,
     try { \
         auto value = json_cast<type>(req.at(#field)); \
         match.add_oxm_field(new field{value}); \
-    } catch (std::overflow_error) { \
+    } catch (std::overflow_error&){ \
         throw; \
     } catch (...) {}
 
