@@ -148,12 +148,13 @@ public:
     //
     Decision custom(CustomDecisionPtr body) const;
 
-protected:
     Decision() = default;
 
     Decision(DecisionData data)
         : m_data(std::move(data))
     { }
+
+protected:
 
     Base& base();
     const Base& base() const;

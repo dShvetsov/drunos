@@ -1,7 +1,3 @@
-# Google Mock
-#################################
-set(GMOCK_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/gmock-1.7.0)
-add_subdirectory(${GMOCK_ROOT})
 
 # Boost Test
 #################################
@@ -22,10 +18,12 @@ include_directories(
 set(TEST_LINK_LIBRARIES
     ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
     gmock
+    gtest
     )
 
 # Subsystems
 ##################################
 add_subdirectory(types)
 add_subdirectory(oxm)
+add_subdirectory(retic)
 #add_subdirectory(maple)

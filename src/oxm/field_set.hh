@@ -98,6 +98,12 @@ public:
     const_iterator cend() const
     { return entries.cend(); }
 
+    iterator find(type t)
+    { return entries.find(field<>(t)); }
+
+    const_iterator find(type t) const
+    { return entries.find(field<>(t)); }
+
     friend bool operator==(const field_set& lhs, const field_set& rhs)
     { return lhs.entries == rhs.entries; }
 
