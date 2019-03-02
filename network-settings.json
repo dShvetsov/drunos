@@ -35,7 +35,7 @@
     },
 
     "controller": {
-        "port": 6652,
+        "port": 6653,
          "nthreads": 1,
          "cbench": false
    },
