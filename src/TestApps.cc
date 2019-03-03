@@ -17,6 +17,7 @@ public:
         retic->registerPolicy("twoports", fwd(1) + fwd(2));
         retic->registerPolicy("twoinports", (filter(in_port == 2) >> fwd(1)) +
                                           (filter(in_port == 1) >> fwd(2)));
+        retic->registerPolicy("dropall", stop());
     }
 };
 
