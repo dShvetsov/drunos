@@ -80,7 +80,14 @@ void Of13Backend::install(oxm::field_set match, std::vector<oxm::field_set> acti
 
 void Of13Backend::install_on(uint64_t dpid, oxm::field_set match, std::vector<oxm::field_set> actions, uint16_t prio) {
     static const auto ofb_out_port = oxm::out_port();
-    OFDriverPtr driver = m_drivers.at(dpid);
+    auto driver_it = m_drivers.find(dpid);
+    if (driver_it == m_drivers.end()) {
+        LOG(WARNING) << "Needed to install rule. But there is no such switch";
+        return;
+    }
+
+    OFDriverPtr driver = driver_it->second;
+
     if (actions.empty()) {
         // drop packet
         driver->installRule(match, prio, {}, m_table);

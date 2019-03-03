@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import time
 
 from mininet.net import Mininet
@@ -54,10 +55,21 @@ def test_dropall():
     assert loss == 100
 
 
+def switch_test():
+    topo = mininet.topo.LinearTopo(k=2, n=1, sopts={'protocols': 'OpenFlow13'})
+    net = Mininet(topo, controller=lambda name: RUNOS(name, profile='two_switch'))
+    net.start()
+    time.sleep(0.5)
+    loss = net.pingAll()
+    net.stop()
+    assert loss == 0
+
+
 
 tests = [test_twoports, test_twoinports]
 
 if __name__ == '__main__':
+    switch_test()
     test_twoports()
     test_twoinports()
     test_dropall()

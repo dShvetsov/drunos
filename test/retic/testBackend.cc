@@ -176,3 +176,24 @@ TEST(BackendTest, TwoSwitchOneRule) {
         10
     );
 }
+
+TEST(BackendTest, NoSwitchInAction) {
+    auto mock_driver1 = std::make_shared<MockDriver>();
+    OFDriverPtr driver1 = mock_driver1;
+
+    std::unordered_map<uint64_t, OFDriverPtr> drivers {
+        {1, driver1}
+    };
+
+    Actions acts = {};
+
+    EXPECT_CALL(*mock_driver1,
+        installRule(_, _, _, _)).Times(0);
+
+    Of13Backend backend(drivers, 2);
+    backend.install(
+        oxm::field_set{oxm::switch_id() == 2},
+        {},
+        10
+    );
+}

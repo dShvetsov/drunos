@@ -92,5 +92,12 @@ policy operator+(policy lhs, policy rhs)
     return Parallel{lhs, rhs};
 }
 
+// This is only for purpose that seq operator must have higher priorty that parallel operator
+inline
+policy operator|(policy lhs, policy rhs)
+{
+    return Parallel{lhs, rhs};
+}
+
 } // namespace retic
 } // namespace runos

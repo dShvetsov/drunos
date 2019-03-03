@@ -19,9 +19,14 @@
         "learning-switch",
         "drop-all",
         "no-maple-rules",
+        "test-apps",
         "retic",
         "retic-cli"
     ],
+
+    "retic":  {
+	    "main": "twoports"
+    },
 
     "tables": {
         "retic" : 0,
