@@ -13,47 +13,43 @@ REGISTER_APPLICATION(Retic, {"controller", ""})
 
 using namespace runos;
 
-void Retic::init(Loader* loader, const Config& config)
+void Retic::init(Loader* loader, const Config& root_config)
 {
+    // this->registerPolicy("__builtin_donothing__", retic::stop());
     auto ctrl = Controller::get(loader);
     m_table = ctrl->getTable("retic");
-    QObject::connect(ctrl, &Controller::switchUp, this, &Retic::onSwitchUp);
+    Config config = config_cd(root_config, "retic");
+    m_main_policy = config_get(config, "main", "__builtin_donothing__");
+    LOG(INFO) << "Main policy: " << m_main_policy;
 
-//    ctrl->registerHandler<of13::PacketIn>(
-//            [=](of13::PacketIn& pi, SwitchConnectionPtr conn) {
-//                LOG(INFO) << "Packet in";
-//                uint8_t buffer[1500];
-//                PacketParser pp { pi, conn->dpid() };
-//                retic::Applier<PacketParser> runtime{pp};
-//                boost::apply_visitor(runtime, m_policy);
-//                auto& results = runtime.results();
-//                for (auto& [p, meta]: results) {
-//                    const Packet& pkt{p};
-//                    of13::PacketOut po;
-//                    po.xid(0x1234);
-//                    po.buffer_id(OFP_NO_BUFFER);
-//                    uint32_t out_port = pkt.load(oxm::out_port());
-//                    LOG(WARNING) << "Output to " << out_port << " port";
-//                    if (out_port != 0) {
-//                        po.in_port(pkt.load(oxm::in_port()));
-//                        po.add_action(new of13::OutputAction(out_port, 0));
-//                        size_t len = p.total_bytes();
-//                        p.serialize_to(sizeof(buffer), buffer);
-//                        po.data(buffer, len);
-//                        conn->send(po);
-//                    }
-//                }
-//            }
-//        );
+    QObject::connect(ctrl, &Controller::switchUp, this, &Retic::onSwitchUp);
+}
+
+void Retic::registerPolicy(std::string name, retic::policy policy) {
+    LOG(INFO) << "Register policy: " << name;
+    m_policies[name] = policy;
 }
 
 void Retic::onSwitchUp(SwitchConnectionPtr conn, of13::FeaturesReply fr) {
     m_backend = nullptr;
     m_drivers[conn->dpid()] = makeDriver(conn);
-    retic::fdd::diagram d = retic::fdd::compile(m_policy);
+    this->reinstallRules();
+}
+
+void Retic::clearRules() {
+    m_backend = nullptr;
+}
+
+void Retic::reinstallRules() {
+    retic::fdd::diagram d = retic::fdd::compile(m_policies[m_main_policy]);
     m_backend = std::make_unique<Of13Backend>(m_drivers, m_table);
     retic::fdd::Translator translator(*m_backend);
     boost::apply_visitor(translator, d);
+}
+
+void Retic::setMain(std::string new_main) {
+    m_main_policy = new_main;
+    this->reinstallRules();
 }
 
 namespace runos {

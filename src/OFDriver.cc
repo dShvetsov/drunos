@@ -106,7 +106,7 @@ public:
             gm.commmand(of13::OFPGC_ADD);
             gm.group_type(of13::OFPGT_ALL);
             for (auto& acts: m_buckets) {
-                LOG(INFO) << "  Bucket!";
+                DVLOG(40) << "  Bucket!";
                 of13::Bucket b;
                 b.watch_port(of13::OFPP_ANY);
                 b.watch_group(of13::OFPG_ANY);
@@ -150,7 +150,7 @@ public:
 
     RulePtr installRule(oxm::field_set match, uint16_t prio, Actions actions, uint8_t table) override {
 
-        LOG(INFO) << "Install rule with cookie: " << std::hex << m_cookie_gen;
+        DVLOG(40) << "Install rule with cookie: " << std::hex << m_cookie_gen;
 
         RulePtr ret = std::make_shared<Fluid13Rule>(
             m_conn,
@@ -165,7 +165,7 @@ public:
     }
     GroupPtr installGroup(GroupType type, std::vector<Actions> buckets) override {
 
-        LOG(INFO) << "Install group with id: " << std::hex << m_id_gen;
+        DVLOG(40) << "Install group with id: " << std::hex << m_id_gen;
 
         GroupPtr ret = std::make_shared<Fluid13Group>(
             m_conn,

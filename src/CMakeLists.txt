@@ -62,6 +62,9 @@ set(SOURCES
     # Json
     json11.cpp
     SwitchCli.cc
+    ReticCli.cc
+    # funcs test
+    TestApps.cc
 )
 
 add_definitions(

@@ -30,9 +30,9 @@ struct PacketFunction;
 
 using policy =
     boost::variant<
+        Stop,
         Filter,
         Modify,
-        Stop,
         boost::recursive_wrapper<PacketFunction>,
         boost::recursive_wrapper<Sequential>,
         boost::recursive_wrapper<Parallel>

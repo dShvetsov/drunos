@@ -21,12 +21,22 @@ class Retic: public Application {
 SIMPLE_APPLICATION(Retic, "retic")
 public:
     void init(Loader* loader, const Config& config) override;
+    void registerPolicy(std::string name, runos::retic::policy policy);
+
+    const std::string& getMainName() const { return m_main_policy; }
+    runos::retic::policy getMainPolicy() const { return m_policies.at(m_main_policy); }
+
+    void clearRules();
+    void reinstallRules();
+    void setMain(std::string new_main);
 
 public slots:
     void onSwitchUp(runos::SwitchConnectionPtr conn, fluid_msg::of13::FeaturesReply fr);
 
 private:
-    runos::retic::policy m_policy = runos::retic::fwd(2) + runos::retic::fwd(1);
+    std::unordered_map<std::string, runos::retic::policy> m_policies;
+    std::string m_main_policy;
+
     std::unordered_map<uint64_t, runos::OFDriverPtr> m_drivers;
     std::unique_ptr<runos::Of13Backend> m_backend;
     uint8_t m_table;
