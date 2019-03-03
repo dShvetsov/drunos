@@ -19,7 +19,8 @@
         "learning-switch",
         "drop-all",
         "no-maple-rules",
-        "retic"
+        "retic",
+        "retic-cli"
     ],
 
     "tables": {

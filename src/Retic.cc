@@ -15,7 +15,7 @@ using namespace runos;
 
 void Retic::init(Loader* loader, const Config& root_config)
 {
-    // this->registerPolicy("__builtin_donothing__", retic::stop());
+    this->registerPolicy("__builtin_donothing__", retic::stop());
     auto ctrl = Controller::get(loader);
     m_table = ctrl->getTable("retic");
     Config config = config_cd(root_config, "retic");
@@ -34,6 +34,15 @@ void Retic::onSwitchUp(SwitchConnectionPtr conn, of13::FeaturesReply fr) {
     m_backend = nullptr;
     m_drivers[conn->dpid()] = makeDriver(conn);
     this->reinstallRules();
+}
+
+std::vector<std::string> Retic::getPoliciesName() const {
+    std::vector<std::string> ret;
+    ret.reserve(m_policies.size());
+    for (const auto& [name, pol]: m_policies) {
+        ret.push_back(name);
+    }
+    return ret;
 }
 
 void Retic::clearRules() {

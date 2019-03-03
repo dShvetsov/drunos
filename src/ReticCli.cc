@@ -21,6 +21,7 @@ public:
         desc.add_options()
             ("main,m", "Show main function")
             ("verbose,v", "Show main implementation")
+            ("policies,p", "Show registered policies")
             ("clear,c", "Clear rules")
             ("reinstall,r", "Reinstall rules of policy")
             ("set_main,s", options::value<std::string>(), "set main function");
@@ -32,7 +33,12 @@ public:
                     std::stringstream ss;
                     retic::Dumper dumper(ss);
                     boost::apply_visitor(dumper, app->getMainPolicy());
-                    out.print("{}", ss.str());
+                    out.print("Implementation: {}", ss.str());
+                }
+            }
+            if (not vm["policies"].empty()) {
+                for (auto& name: app->getPoliciesName()) {
+                    out.print("{}", name);
                 }
             }
             if (not vm["clear"].empty()) {
@@ -49,3 +55,5 @@ public:
         cli->registerCommand("retic", std::move(desc), std::move(cmd), "Retic commands");
     }
 };
+
+REGISTER_APPLICATION(ReticCli, {"retic", "command-line-interface", ""})
