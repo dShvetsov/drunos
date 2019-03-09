@@ -52,9 +52,9 @@ struct sequential_composition: public boost::static_visitor<diagram>
 private:
     struct left_action_applier: public boost::static_visitor<diagram>
     {
-        left_action_applier(oxm::field_set action): action(action)
+        left_action_applier(action_unit action): action(action)
         { }
-        oxm::field_set action;
+        action_unit action;
 
         diagram operator()(const leaf& l) const;
         diagram operator()(const node& n) const;

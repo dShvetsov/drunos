@@ -66,13 +66,12 @@ TEST(FddCompilerTest, Filter) {
     policy p = filter(F<1>() == 100);
     fdd::diagram diagram = fdd::compile(p);
     fdd::node node = boost::get<fdd::node>(diagram);
-    oxm::field<> true_value = F<1>() == 100;
-    EXPECT_EQ(node.field, true_value);
-    fdd::leaf pos = boost::get<fdd::leaf>(node.positive);
-    ASSERT_THAT(pos.sets, SizeIs(1));
-    EXPECT_TRUE(pos.sets[0].empty());
-    fdd::leaf neg = boost::get<fdd::leaf>(node.negative);
-    EXPECT_THAT(neg.sets, IsEmpty());
+    fdd::diagram true_value = fdd::node {
+         F<1>() == 100,
+         fdd::leaf {{ oxm::field_set{} }},
+         fdd::leaf { }
+    };
+    ASSERT_EQ(true_value, diagram);
 
 }
 

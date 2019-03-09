@@ -12,7 +12,12 @@ void Translator::operator()(const node& n) {
 }
 
 void Translator::operator()(const leaf& l) {
-    m_backend.install(match, l.sets, priority);
+    std::vector<oxm::field_set> sets;
+    sets.reserve(l.sets.size());
+    for (auto& s: l.sets) {
+        sets.push_back(s.pred_actions);
+    }
+    m_backend.install(match, sets, priority);
     priority++;
 }
 

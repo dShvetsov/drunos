@@ -1,5 +1,8 @@
 #pragma once
 
+#include <optional>
+#include <memory>
+
 #include <boost/variant.hpp>
 #include <boost/variant/recursive_wrapper_fwd.hpp>
 
@@ -12,9 +15,49 @@ namespace runos {
 namespace retic {
 namespace fdd {
 
-struct leaf {
-    std::vector<oxm::field_set> sets;
+struct action_unit {
+    action_unit(oxm::field_set acts) : pred_actions(acts) { }
+    action_unit(const action_unit& acts)
+        : pred_actions(acts.pred_actions)
+        , body(acts.body)
+    {
+        if (acts.post_actions != nullptr) {
+            post_actions.reset(new action_unit(*acts.post_actions));
+        }
+    }
+    action_unit& operator=(const action_unit& acts) {
+        pred_actions = acts.pred_actions;
+        body = acts.body;
+        if (acts.post_actions != nullptr) {
+            post_actions.reset(new action_unit(*acts.post_actions));
+        }
+        return *this;
+    }
+    oxm::field_set pred_actions;
+    std::optional<PacketFunction> body;
+    std::unique_ptr<action_unit> post_actions;
+    friend bool operator==(const action_unit& lhs, const action_unit& rhs) {
+        bool pred_eq = lhs.pred_actions == rhs.pred_actions;
+//        bool body_eq = lhs.body == rhs.body;
+//        if (lhs.post_actions != nullptr) {
+//            if (rhs.post_actions != nullptr) {
+//                return pred_eq && body_eq && *lhs.post_actions == *rhs.post_actions;
+//            } else {
+//                return false;
+//            }
+//        } else if (rhs.post_actions != nullptr) {
+//            return false
+//        } else {
+//            return pred_eq && body_eq;
+//        }
+        return pred_eq;
+    }
 };
+
+struct leaf {
+    std::vector<action_unit> sets;
+};
+
 
 struct node;
 struct compiler;

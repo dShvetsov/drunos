@@ -136,16 +136,16 @@ diagram sequential_composition::left_action_applier::operator()(const leaf& l) c
     leaf result{};
     result.sets.reserve(l.sets.size());
     for (auto& a : l.sets) {
-        oxm::field_set fs = action;
-        for (auto& f: a) { fs.modify(f); }
+        oxm::field_set fs = action.pred_actions;
+        for (auto& f: a.pred_actions) { fs.modify(f); }
         result.sets.push_back(fs);
     }
     return result;
 }
 
 diagram sequential_composition::left_action_applier::operator()(const node& n) const {
-    auto it = action.find(n.field.type());
-    if (it == action.end()) {
+    auto it = action.pred_actions.find(n.field.type());
+    if (it == action.pred_actions.end()) {
         diagram positive = boost::apply_visitor(*this, n.positive);
         diagram negative = boost::apply_visitor(*this, n.negative);
         return node{n.field, positive, negative};
@@ -251,7 +251,7 @@ std::ostream& operator<<(std::ostream& out, const node& rhs) {
 std::ostream& operator<<(std::ostream& out, const leaf& rhs) {
     out << "set_field: [ ";
     for (auto& i: rhs.sets) {
-        out << "(" << i << ") ";
+        out << "(" << i.pred_actions << ") ";
     }
     out << "]";
     return out;
