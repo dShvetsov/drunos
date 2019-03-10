@@ -39,7 +39,11 @@ using policy =
     >;
 
 struct PacketFunction {
+    uint64_t id;
     std::function<policy(Packet& pkt)> function;
+    friend bool operator==(const PacketFunction& lhs, const PacketFunction& rhs) {
+        return lhs.id == rhs.id;
+    }
 };
 
 struct Sequential {
@@ -77,7 +81,8 @@ policy filter(oxm::field<> f)
 inline
 policy handler(std::function<policy(Packet&)> function)
 {
-    return PacketFunction{function};
+    static uint64_t id_gen = 0;
+    return PacketFunction{id_gen++, function};
 }
 
 inline

@@ -625,8 +625,19 @@ TEST(FddCompilerTest, CompileParallel) {
     EXPECT_EQ(true_value, result);
 }
 
-TEST(DISABLED_FddCompilerTest, CompilePacketFunction) {
+TEST(FddCompilerTest, CompilePacketFunction) {
     policy p = handler([](Packet& pkt){ return stop(); });
+    PacketFunction pf = boost::get<PacketFunction>(p);
     fdd::diagram result = fdd::compile(p);
-    EXPECT_TRUE(false) << "You need implement it!";
+    fdd::diagram true_value = fdd::leaf{{ {oxm::field_set{}, pf} }};
+    ASSERT_THAT(true_value, result);
+//    fdd::leaf l = boost::get<fdd::leaf>(result);
+//    ASSERT_THAT(l.sets, SizeIs(1));
+//    fdd::action_unit& unit = l.sets[0];
+//    ASSERT_TRUE(unit.body.has_value());
+//    auto body = unit.body.value();
+//    oxm::field_set fs;
+//    Packet& pkt(fs);
+//    policy p2 = body.function(pkt);
+//    boost::get<Stop>(p2);
 }

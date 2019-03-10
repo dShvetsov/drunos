@@ -42,8 +42,8 @@ diagram Compiler::operator()(const Parallel& p) const {
     diagram d2 = boost::apply_visitor(*this, p.two);
     return boost::apply_visitor(dispatcher, d1, d2);
 }
-diagram Compiler::operator()(const PacketFunction&) const {
-    throw std::runtime_error("Not implemented");
+diagram Compiler::operator()(const PacketFunction& f) const {
+    return leaf{ {{oxm::field_set{}, f}} };
 }
 
 
@@ -132,13 +132,30 @@ diagram sequential_composition::operator()(const node& lhs, const diagram& rhs) 
     return boost::apply_visitor(parallel, one_restricted, two_restricted);
 }
 
+static oxm::field_set field_set_union(const oxm::field_set& lhs, const oxm::field_set rhs) {
+    oxm::field_set ret_value = lhs;
+    for (auto& v : rhs) {
+        ret_value.modify(v);
+    }
+    return ret_value;
+}
+
+static action_unit seq_actions(const action_unit& one, const action_unit& two) {
+    if (one.body.has_value()) {
+        action_unit emty;
+        action_unit& passed_value = one.post_actions == nullptr ? emty : *one.post_actions;
+        return action_unit(one.pred_actions, one.body.value(), seq_actions(passed_value, two));
+    } else {
+        return action_unit(field_set_union(one.pred_actions, two.pred_actions), two.body, two.post_actions);
+    }
+}
+
 diagram sequential_composition::left_action_applier::operator()(const leaf& l) const {
     leaf result{};
     result.sets.reserve(l.sets.size());
     for (auto& a : l.sets) {
-        oxm::field_set fs = action.pred_actions;
-        for (auto& f: a.pred_actions) { fs.modify(f); }
-        result.sets.push_back(fs);
+        action_unit au = seq_actions(action, a);
+        result.sets.push_back(au);
     }
     return result;
 }
