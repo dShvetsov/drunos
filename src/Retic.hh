@@ -52,6 +52,7 @@ public:
     { }
 
     void install(oxm::field_set match, std::vector<oxm::field_set> actions, uint16_t prio) override;
+    void installBarrier(oxm::field_set match, uint16_t prio) override;
 private:
     void install_on(uint64_t dpid, oxm::field_set match, std::vector<oxm::field_set> actions, uint16_t prio);
     std::unordered_map<uint64_t, OFDriverPtr> m_drivers;

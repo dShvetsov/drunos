@@ -15,6 +15,10 @@ void Translator::operator()(const leaf& l) {
     std::vector<oxm::field_set> sets;
     sets.reserve(l.sets.size());
     for (auto& s: l.sets) {
+        if (s.body.has_value()) {
+            m_backend.installBarrier(match, priority++);
+            return;
+        }
         sets.push_back(s.pred_actions);
     }
     m_backend.install(match, sets, priority);

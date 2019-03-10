@@ -17,6 +17,7 @@ struct F : oxm::define_type< F<N>, 0, N, 32, uint32_t, uint32_t, true>
 
 struct MockBackend: public Backend {
     MOCK_METHOD3(install, void(oxm::field_set, std::vector<oxm::field_set>, uint16_t));
+    MOCK_METHOD2(installBarrier, void(oxm::field_set, uint16_t));
 };
 
 using match = std::vector<oxm::field_set>;
@@ -67,4 +68,18 @@ TEST(FddTranslation, TranslateSimpleNode) {
     fdd::Translator translator{backend};
     boost::apply_visitor(translator, d);
     EXPECT_GE(prio_1, prio_2);
+}
+
+TEST(FddTranslation, BarrierRule) {
+    MockBackend backend;
+
+    policy p = handler([](Packet& pkt){return stop();});
+    auto pf = boost::get<PacketFunction>(p);
+    fdd::diagram d = fdd::leaf{{ {oxm::field_set{}, pf}}};
+
+    EXPECT_CALL(backend, install(_, _,_)).Times(0);
+    EXPECT_CALL(backend, installBarrier(_, _)).Times(1);
+
+    fdd::Translator translator{backend};
+    boost::apply_visitor(translator, d);
 }

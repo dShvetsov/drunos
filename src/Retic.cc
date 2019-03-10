@@ -78,6 +78,8 @@ void Of13Backend::install(oxm::field_set match, std::vector<oxm::field_set> acti
     }
 }
 
+void Of13Backend::installBarrier(oxm::field_set match, uint16_t prio) { }
+
 void Of13Backend::install_on(uint64_t dpid, oxm::field_set match, std::vector<oxm::field_set> actions, uint16_t prio) {
     static const auto ofb_out_port = oxm::out_port();
     auto driver_it = m_drivers.find(dpid);
