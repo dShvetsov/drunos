@@ -63,6 +63,8 @@ void Retic::setMain(std::string new_main) {
 
 namespace runos {
 
+// TODO: remove code duplication of switch detection in install and installBarrier method
+
 void Of13Backend::install(oxm::field_set match, std::vector<oxm::field_set> actions, uint16_t prio) {
     static const auto ofb_switch_id = oxm::switch_id();
     auto switch_id_it = match.find(oxm::type(ofb_switch_id));
@@ -78,7 +80,28 @@ void Of13Backend::install(oxm::field_set match, std::vector<oxm::field_set> acti
     }
 }
 
-void Of13Backend::installBarrier(oxm::field_set match, uint16_t prio) { }
+void Of13Backend::installBarrier(oxm::field_set match, uint16_t prio) {
+    static const auto ofb_switch_id = oxm::switch_id();
+    auto switch_id_it = match.find(oxm::type(ofb_switch_id));
+    Actions act;
+    act.out_port = ports::to_controller;
+
+    if (switch_id_it != match.end()) {
+        Packet& pkt_iface(match);
+        uint64_t dpid = pkt_iface.load(ofb_switch_id);
+        match.erase(oxm::mask<>(ofb_switch_id));
+        auto driver_it = m_drivers.find(dpid);
+        if (driver_it == m_drivers.end()) {
+            LOG(WARNING) << "Needed to install rule. But there is no such switch";
+            return;
+        }
+        driver_it->second->installRule(match, prio, act, m_table);
+    } else {
+        for (auto [dpid, driver]: m_drivers) {
+            driver->installRule(match, prio, act, m_table);
+        }
+    }
+}
 
 void Of13Backend::install_on(uint64_t dpid, oxm::field_set match, std::vector<oxm::field_set> actions, uint16_t prio) {
     static const auto ofb_out_port = oxm::out_port();

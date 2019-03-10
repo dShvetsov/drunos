@@ -8,6 +8,11 @@
 
 namespace runos {
 
+namespace ports {
+    static constexpr uint32_t drop = 0;
+    static constexpr uint32_t to_controller = 0xfffffffd; // TODO: Unhadrcode
+}
+
 struct Actions {
     uint32_t out_port = 0;
     uint32_t group_id = 0;

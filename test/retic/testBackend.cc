@@ -197,3 +197,70 @@ TEST(BackendTest, NoSwitchInAction) {
         10
     );
 }
+
+TEST(BackendTest, TwoSwitchOneBarrierRule) {
+    auto mock_driver1 = std::make_shared<MockDriver>();
+    OFDriverPtr driver1 = mock_driver1;
+
+    auto mock_driver2 = std::make_shared<MockDriver>();
+    OFDriverPtr driver2 = mock_driver2;
+
+    std::unordered_map<uint64_t, OFDriverPtr> drivers {
+        {1, driver1},
+        {2, driver2}
+    };
+
+    Actions acts = {.out_port = ports::to_controller};
+
+    EXPECT_CALL(*mock_driver1,
+        installRule(_, _, _, _)).Times(0);
+
+    EXPECT_CALL(*mock_driver2,
+        installRule(oxm::field_set{}, 10, acts, 2));
+
+    Of13Backend backend(drivers, 2);
+    backend.installBarrier(
+        oxm::field_set{oxm::switch_id() == 2},
+        10
+    );
+}
+
+TEST(BackendTest, BarrierRule) {
+    auto mock_driver1 = std::make_shared<MockDriver>();
+    OFDriverPtr driver1 = mock_driver1;
+
+    std::unordered_map<uint64_t, OFDriverPtr> drivers {
+        {1, driver1}
+    };
+
+    Actions acts = {.out_port = ports::to_controller};
+
+    EXPECT_CALL(*mock_driver1,
+        installRule(oxm::field_set{}, 10, acts, 2));
+
+    Of13Backend backend(drivers, 2);
+    backend.installBarrier(
+        oxm::field_set{},
+        10
+    );
+}
+
+TEST(BackendTest, BarrierRuleNoSwitch) {
+    auto mock_driver1 = std::make_shared<MockDriver>();
+    OFDriverPtr driver1 = mock_driver1;
+
+    std::unordered_map<uint64_t, OFDriverPtr> drivers {
+        {1, driver1}
+    };
+
+    Actions acts = {.out_port = ports::to_controller};
+
+    EXPECT_CALL(*mock_driver1,
+        installRule(_, _, _, _)).Times(0);
+
+    Of13Backend backend(drivers, 2);
+    backend.installBarrier(
+        oxm::field_set{oxm::switch_id() == 2},
+        10
+    );
+}
