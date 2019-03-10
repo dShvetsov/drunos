@@ -22,6 +22,7 @@ public:
         retic->registerPolicy("two_switch",
             filter(switch_id == 1) >> (fwd(1) + fwd(2)) | filter(switch_id == 2) >> (fwd(1) + fwd(2))
         );
+        retic->registerPolicy("func", handler([](Packet& pkt){ return fwd(1) + fwd(2); }));
     }
 };
 
