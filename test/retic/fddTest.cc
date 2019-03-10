@@ -631,13 +631,28 @@ TEST(FddCompilerTest, CompilePacketFunction) {
     fdd::diagram result = fdd::compile(p);
     fdd::diagram true_value = fdd::leaf{{ {oxm::field_set{}, pf} }};
     ASSERT_THAT(true_value, result);
-//    fdd::leaf l = boost::get<fdd::leaf>(result);
-//    ASSERT_THAT(l.sets, SizeIs(1));
-//    fdd::action_unit& unit = l.sets[0];
-//    ASSERT_TRUE(unit.body.has_value());
-//    auto body = unit.body.value();
-//    oxm::field_set fs;
-//    Packet& pkt(fs);
-//    policy p2 = body.function(pkt);
-//    boost::get<Stop>(p2);
 }
+
+TEST(FddCompilerTest, SeqAction1If) {
+    policy p1 = handler([](Packet& pkt){ return stop(); });
+    policy p2 = handler([](Packet& pkt){ return fwd(1); });
+    auto pf1 = boost::get<PacketFunction>(p1);
+    auto pf2 = boost::get<PacketFunction>(p2);
+    fdd::diagram d1 = fdd::leaf{{ {oxm::field_set{F<1>() == 1}, pf1} }};
+    fdd::diagram d2 = fdd::leaf{{ {oxm::field_set{F<2>() == 2}, pf2} }};
+    fdd::diagram result = boost::apply_visitor(fdd::sequential_composition{}, d1, d2);
+    fdd::action_unit au = fdd::action_unit{oxm::field_set{F<2>() == 2}, pf2};
+    fdd::diagram true_value = fdd::leaf{{ {oxm::field_set{F<1>() == 1}, pf1, au}}};
+    ASSERT_EQ(true_value, result);
+}
+
+TEST(FddCompilerTest, SeqAction2If) {
+    policy p2 = handler([](Packet& pkt){ return fwd(1); });
+    auto pf2 = boost::get<PacketFunction>(p2);
+    fdd::diagram d1 = fdd::leaf{{ {oxm::field_set{F<1>() == 1}} }};
+    fdd::diagram d2 = fdd::leaf{{ {oxm::field_set{F<2>() == 2}, pf2} }};
+    fdd::diagram result = boost::apply_visitor(fdd::sequential_composition{}, d1, d2);
+    fdd::diagram true_value = fdd::leaf{{ {oxm::field_set{F<1>() == 1, F<2>() == 2}, pf2}}};
+    ASSERT_EQ(true_value, result);
+}
+
