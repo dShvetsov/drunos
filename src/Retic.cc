@@ -17,10 +17,37 @@ void Retic::init(Loader* loader, const Config& root_config)
 {
     this->registerPolicy("__builtin_donothing__", retic::stop());
     auto ctrl = Controller::get(loader);
+
+    ctrl->registerHandler<of13::PacketIn>([=](of13::PacketIn& pi, SwitchConnectionPtr conn) {
+        LOG(INFO) << "PacketIn";
+        uint8_t buffer[1500];
+        PacketParser pp{pi, conn->dpid()};
+        retic::Applier<PacketParser> runtime{pp};
+        boost::apply_visitor(runtime, m_policies[m_main_policy]);
+        for (auto& [p, meta]: runtime.results()) {
+            const Packet& pkt{p};
+            of13::PacketOut po;
+            po.xid(0x123);
+            po.buffer_id(OFP_NO_BUFFER);
+            uint32_t out_port = pkt.load(oxm::out_port());
+            LOG(INFO) << "Move packet to " << out_port;
+            if (out_port != 0) {
+                po.in_port(pkt.load(oxm::in_port()));
+                po.add_action(new of13::OutputAction(out_port, 0));
+                size_t len = p.total_bytes();
+                p.serialize_to(sizeof(buffer), buffer);
+                po.data(buffer, len);
+                conn->send(po);
+            }
+        }
+    });
+
     m_table = ctrl->getTable("retic");
     Config config = config_cd(root_config, "retic");
     m_main_policy = config_get(config, "main", "__builtin_donothing__");
     LOG(INFO) << "Main policy: " << m_main_policy;
+
+    m_fdd = retic::fdd::compile(m_policies[m_main_policy]);
 
     QObject::connect(ctrl, &Controller::switchUp, this, &Retic::onSwitchUp);
 }
@@ -50,14 +77,14 @@ void Retic::clearRules() {
 }
 
 void Retic::reinstallRules() {
-    retic::fdd::diagram d = retic::fdd::compile(m_policies[m_main_policy]);
     m_backend = std::make_unique<Of13Backend>(m_drivers, m_table);
     retic::fdd::Translator translator(*m_backend);
-    boost::apply_visitor(translator, d);
+    boost::apply_visitor(translator, m_fdd);
 }
 
 void Retic::setMain(std::string new_main) {
     m_main_policy = new_main;
+    m_fdd = retic::fdd::compile(m_policies[m_main_policy]);
     this->reinstallRules();
 }
 

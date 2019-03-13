@@ -25,13 +25,13 @@
     ],
 
     "retic":  {
-	    "main": "twoports"
+        "main": "func"
     },
 
     "tables": {
-        "retic" : 0,
         "static-flow-pusher" : 1,
-        "maple" : 2
+        "retic": 2,
+        "maple" : 3
     },
 
     "flow-manager" : {
@@ -72,8 +72,8 @@
     },
 
     "switch-stats": {
-	"poll-interval": 1,
-	"pin-to-thread": 1
+    "poll-interval": 1,
+    "pin-to-thread": 1
     }
 }
 

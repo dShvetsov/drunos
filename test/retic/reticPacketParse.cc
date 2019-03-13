@@ -40,6 +40,24 @@ TEST(PacketParserTest, OutPortAfterPolicy)
         ));
 }
 
+DISABLED_TEST(PacketParserTest, ApplyTwoActions)
+{
+    policy p = handler([](Packet& pkt) {return fwd(1) + fwd(2); });
+
+    fluid_msg::of13::PacketIn pi(10, OFP_NO_BUFFER, 0, 0, 0, 0);
+    pi.add_oxm_field(new fluid_msg::of13::InPort(2));
+    PacketParser pkt(pi, 1);
+    Applier<PacketParser> applier{pkt};
+    boost::apply_visitor(applier, p);
+    auto& results = applier.results();
+
+    using namespace ::testing;
+    ASSERT_THAT(results, UnorderedElementsAre(
+        Key(ResultOf([](auto& p){ const Packet& pkt{p}; return int(pkt.load(oxm::out_port()));}, 1)),
+        Key(ResultOf([](auto& p){ const Packet& pkt{p}; return int(pkt.load(oxm::out_port()));}, 2))
+    ));
+}
+
 TEST(PacketParserTest, ModifyOutPort)
 {
     fluid_msg::of13::PacketIn pi(10, OFP_NO_BUFFER, 0, 0, 0, 0);

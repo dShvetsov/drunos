@@ -9,6 +9,7 @@
 #include "Loader.hh"
 #include "retic/policies.hh"
 #include "retic/backend.hh"
+#include "retic/fdd.hh"
 #include "OFDriver.hh"
 #include "SwitchConnection.hh"
 #include <fluid/of13msg.hh>
@@ -17,7 +18,8 @@ namespace runos {
     struct Of13Backend;
 }
 
-class Retic: public Application {
+class Retic : public Application
+{
 SIMPLE_APPLICATION(Retic, "retic")
 public:
     void init(Loader* loader, const Config& config) override;
@@ -36,6 +38,7 @@ public slots:
 
 private:
     std::unordered_map<std::string, runos::retic::policy> m_policies;
+    retic::fdd::diagram m_fdd;
     std::string m_main_policy;
 
     std::unordered_map<uint64_t, runos::OFDriverPtr> m_drivers;

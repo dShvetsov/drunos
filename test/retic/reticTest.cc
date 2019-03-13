@@ -229,7 +229,7 @@ TEST(FunctionTest, FunctionWithFilter1)
         if (pkt.test(F<1>() == 100)) {
             return fwd(123);
         } else {
-            fwd(321);
+            return fwd(321);
         }
     };
 
@@ -276,3 +276,19 @@ TEST(FunctionTest, FunctionWithFilter2)
                     }, true))
         ));
 }
+
+TEST(FunctionTest, OutputToTwoPorts) 
+{
+    policy p = handler([](Packet& pkt) {return fwd(1) + fwd(2); });
+
+    oxm::field_set pkt {oxm::out_port() == 0};
+    Applier<oxm::field_set> applier{pkt};
+    boost::apply_visitor(applier, p);
+    auto& results = applier.results();
+    using namespace ::testing;
+    ASSERT_THAT(results, UnorderedElementsAre(
+        Key(oxm::field_set{oxm::out_port() == 1}),
+        Key(oxm::field_set{oxm::out_port() == 2})
+    ));
+}
+
