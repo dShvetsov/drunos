@@ -94,9 +94,9 @@ using diagram = boost::variant<
 
 
 struct node {
-    oxm::field<> field;
-    diagram positive;
-    diagram negative;
+    oxm::mask<> mask;
+    std::unordered_map<bits<>, diagram> cases;
+    diagram otherwise;
 };
 
 } // namespace fdd

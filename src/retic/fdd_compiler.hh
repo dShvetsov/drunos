@@ -14,7 +14,8 @@ diagram compile(const policy&);
 
 class restriction {
 public:
-    oxm::field<> field;
+    oxm::mask<> field;
+    bits<> bits;
     diagram d;
     bool test; // positive or negative test
 

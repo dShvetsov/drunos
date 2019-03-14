@@ -14,14 +14,20 @@ namespace runos {
 namespace retic {
 namespace fdd {
 
-
 diagram compile(const policy& p) {
     Compiler compiler;
     return boost::apply_visitor(compiler, p);
 }
 
 diagram Compiler::operator()(const Filter& fil) const {
-    return node{fil.field, leaf{{oxm::field_set()}}, leaf{}};
+    node ret{
+        oxm::mask<>(fil.field),
+        {},
+        leaf{}
+    };
+    auto s = ret.cases.emplace(fil.field..value_bits(), leaf{{oxm::field_set{}}});
+    ASSERT(s.second);
+    return ret;
 }
 
 diagram Compiler::operator()(const Modify& mod) const {
@@ -50,6 +56,17 @@ diagram Compiler::operator()(const PacketFunction& f) const {
 // ================= Compositions operators ============================
 
 // ---- Parallel -----
+
+static diagram default_parallel_leaf_operation(const leaf& lhs, diagram& rhs) {
+    node ret{lhs.mask, {}, leaf{}};
+    for (auto& [bits, d]: lhs.cases) {
+        auto s = ret.cases.emplace(bits, boost::apply_visitor(*this, d, rhs));
+        ASSERT(s.second);
+    }
+    ret.otherwise = boost::apply_visitor(*this, lhs.otherwise, rhs);
+    return ret;
+}
+
 diagram parallel_composition::operator()(const leaf& lhs, const leaf& rhs) const {
     leaf ret;
     ret.sets.reserve(lhs.sets.size() + rhs.sets.size());
@@ -59,46 +76,41 @@ diagram parallel_composition::operator()(const leaf& lhs, const leaf& rhs) const
 }
 
 diagram parallel_composition::operator()(const node& lhs, const leaf& rhs) const {
-    diagram positive = boost::apply_visitor(*this, lhs.positive, diagram{rhs});
-    diagram negative = boost::apply_visitor(*this, lhs.negative, diagram{rhs});
-    return node{lhs.field, positive, negative};
+    return default_parallel_leaf_operation(lhs, rhs);
 }
+
 
 diagram parallel_composition::operator()(const leaf& lhs, const node& rhs) const {
     return boost::apply_visitor(*this, diagram{rhs}, diagram{lhs});
 }
 
 diagram parallel_composition::operator()(const node& lhs, const node& rhs) const {
-    if (lhs.field == rhs.field) {
-        diagram positive = boost::apply_visitor(
-            *this, diagram(lhs.positive), diagram(rhs.positive)
-        );
-        diagram negative = boost::apply_visitor(
-            *this, diagram(lhs.negative), diagram(rhs.negative)
-        );
-        return node{lhs.field, positive, negative};
-    } else if (lhs.field.type() == rhs.field.type()) {
-        if (lhs.field.value_bits() < rhs.field.value_bits()) {
-            diagram positive = boost::apply_visitor(
-                *this, diagram(lhs.positive), diagram(rhs.negative)
-            );
-            diagram negative = boost::apply_visitor(
-                *this, diagram(lhs.negative), diagram(rhs)
-            );
-            return node{lhs.field, positive, negative};
-        } else {
-            return boost::apply_visitor(
-                *this, diagram(rhs), diagram(lhs)
-            );
+    if (lhs.mask.type() == rhs.mask.type()) {
+        node ret {lhs.mask, {}, leaf{}};
+        for (auto& [bits, d]: lhs.cases) {
+            auto it = rhs.cases.find(bits);
+            if (it != rhs.cases.end()) {
+                auto s = ret.cases.emplace(bits, boost::apply_visitor(*this, d, it->second));
+                ASSERT(s.second);
+            } else {
+                auto s = ret.cases.emplace(bits, boost::apply_visitor(*this, d, rhs.otherwise));
+                ASSERT(s.second);
+            }
         }
-    } else if (compare_types(lhs.field.type(), rhs.field.type()) > 0) {
-        diagram positive = boost::apply_visitor(*this, diagram(lhs.positive), diagram(rhs));
-        diagram negative = boost::apply_visitor(*this, diagram(lhs.negative), diagram(rhs));
-        return node{lhs.field, positive, negative};
+        for (auto& [bits, d]: rhs.cases) {
+            auto it = lhs.cases.find(bits);
+            if (it != lhs.cases.end()) {
+                // Skip this part becouse already added
+            } else {
+                auto s = ret.cases.emplace(bits, boost::apply_visitor(*this, d, lhs.otherwise));
+                ASSERT(s.second);
+            }
+        }
+        ret.otherwise = boost::apply_visitor(*this, lhs.otherwise, rhs.otherwise);
+    } else if (compare_types(lhs.mask.type(), rhs.mask.type()) > 0) {
+        return default_parallel_leaf_operation(lhs, rhs);
     } else {
-        return boost::apply_visitor(
-            *this, diagram(rhs), diagram(lhs)
-        );
+        return default_parallel_leaf_operation(rhs, lhs);
     }
     throw std::logic_error("Unexsting case of ordering fields");
 }
@@ -124,6 +136,21 @@ diagram sequential_composition::operator()(const leaf& lhs, const diagram& rhs) 
 
 diagram sequential_composition::operator()(const node& lhs, const diagram& rhs) const
 {
+    diagram ret = boost::
+
+    auto type = lhs.mask.type();
+    for (auto& [bits, d]: lhs.cases) {
+        diagram child_d = boost::apply_visitor(*this, d, rhs);
+        oxm::field<> f = (type == bits) & lhs.mask;
+        auto r = restriction(f, child_d, true);
+        auto s = ret.cases.emplace(bits, r.apply());
+        ASSERT(s.second);
+    }
+    diagram child_d = boost::apply_visitor(*this, otherwise, rhs);
+    oxm::field<> f = (type == bits) & lhs.mask;
+    auto r = restriction{f, child_d, false};
+    ret.otherwise = 
+
     diagram one = boost::apply_visitor(*this, lhs.positive, rhs);
     diagram two = boost::apply_visitor(*this, lhs.negative, rhs);
     diagram one_restricted = restriction{lhs.field, one, true}.apply();
