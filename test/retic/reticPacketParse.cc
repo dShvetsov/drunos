@@ -40,7 +40,7 @@ TEST(PacketParserTest, OutPortAfterPolicy)
         ));
 }
 
-DISABLED_TEST(PacketParserTest, ApplyTwoActions)
+TEST(DISABLED_PacketParserTest, ApplyTwoActions)
 {
     policy p = handler([](Packet& pkt) {return fwd(1) + fwd(2); });
 

@@ -38,7 +38,7 @@ public slots:
 
 private:
     std::unordered_map<std::string, runos::retic::policy> m_policies;
-    retic::fdd::diagram m_fdd;
+    runos::retic::fdd::diagram m_fdd;
     std::string m_main_policy;
 
     std::unordered_map<uint64_t, runos::OFDriverPtr> m_drivers;

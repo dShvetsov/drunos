@@ -70,6 +70,62 @@ TEST(FddTranslation, TranslateSimpleNode) {
     EXPECT_GE(prio_1, prio_2);
 }
 
+TEST(FddTranslation, EqualFieldsEqualPriorities) {
+    MockBackend backend;
+    fdd::diagram d = fdd::node {
+        F<1>() == 1,
+        fdd::leaf{{ oxm::field_set{F<10>() == 1}}},
+        fdd::node {
+            F<1>() == 2,
+            fdd::leaf{{ oxm::field_set{F<20>() == 2} }},
+            fdd::leaf{{ oxm::field_set{F<30>() == 3} }}
+        },
+    };
+
+    uint16_t prio_1, prio_2, prio_3;
+    EXPECT_CALL(backend, install(oxm::field_set{F<1>() == 1}, match{oxm::field_set{F<10>() == 1}}, _))
+        .WillOnce(SaveArg<2>(&prio_1));
+
+    EXPECT_CALL(backend, install(oxm::field_set{F<1>() == 2}, match{oxm::field_set{F<20>() == 2}}, _))
+        .WillOnce(SaveArg<2>(&prio_2));
+
+    EXPECT_CALL(backend, install(oxm::field_set{}, match{oxm::field_set{F<30>() == 3}}, _))
+        .WillOnce(SaveArg<2>(&prio_3));
+
+    fdd::Translator translator{backend};
+    boost::apply_visitor(translator, d);
+    EXPECT_EQ(prio_1, prio_2);
+    EXPECT_GE(prio_2, prio_3);
+}
+
+TEST(FddTranslation, DiffFieldsDiffPriorities) {
+    MockBackend backend;
+    fdd::diagram d = fdd::node {
+        F<1>() == 1,
+        fdd::leaf{{ oxm::field_set{F<10>() == 1}}},
+        fdd::node {
+            F<2>() == 2,
+            fdd::leaf{{ oxm::field_set{F<20>() == 2} }},
+            fdd::leaf{{ oxm::field_set{F<30>() == 3} }}
+        },
+    };
+
+    uint16_t prio_1, prio_2, prio_3;
+    EXPECT_CALL(backend, install(oxm::field_set{F<1>() == 1}, match{oxm::field_set{F<10>() == 1}}, _))
+        .WillOnce(SaveArg<2>(&prio_1));
+
+    EXPECT_CALL(backend, install(oxm::field_set{F<2>() == 2}, match{oxm::field_set{F<20>() == 2}}, _))
+        .WillOnce(SaveArg<2>(&prio_2));
+
+    EXPECT_CALL(backend, install(oxm::field_set{}, match{oxm::field_set{F<30>() == 3}}, _))
+        .WillOnce(SaveArg<2>(&prio_3));
+
+    fdd::Translator translator{backend};
+    boost::apply_visitor(translator, d);
+    EXPECT_GE(prio_1, prio_2);
+    EXPECT_GE(prio_2, prio_3);
+}
+
 TEST(FddTranslation, BarrierRule) {
     MockBackend backend;
 
