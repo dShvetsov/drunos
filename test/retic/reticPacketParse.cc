@@ -58,6 +58,49 @@ TEST(DISABLED_PacketParserTest, ApplyTwoActions)
     ));
 }
 
+TEST(PacketParserTest, Clone)
+{
+    fluid_msg::of13::PacketIn pi(10, OFP_NO_BUFFER, 0, 0, 0, 0);
+    struct eth_hdr {
+        uint8_t dst[6];
+        uint8_t src[6];
+        uint16_t type;
+    };
+
+    eth_hdr data{.dst={0x11, 0x22, 0x33, 0x44, 0x55, 0x66}, .src={0xaa,0xbb,0xcc,0xdd,0xee,0xff}, .type=0};
+
+    pi.add_oxm_field(new fluid_msg::of13::InPort(2));
+    pi.data(reinterpret_cast<uint8_t*> (&data), sizeof(data));
+
+    PacketParser pkt(pi, 1, 21);
+    auto pkt2 = pkt.clone();
+    pkt.modify(oxm::out_port() << 2);
+    Packet& pkt_iface(*pkt2);
+
+    ASSERT_EQ(21, pkt_iface.load(oxm::out_port()));
+    ASSERT_TRUE(pkt_iface.test(oxm::eth_dst() == "11:22:33:44:55:66"));
+    ASSERT_TRUE(pkt_iface.test(oxm::eth_src() == "aa:bb:cc:dd:ee:ff"));
+
+}
+
+// TODO: move to oxm test directory
+template <size_t N>
+struct F : oxm::define_type< F<N>, 0, N, 32, uint32_t, uint32_t, true>
+{ };
+TEST(FieldSetTest, Clone) 
+{
+    oxm::field_set fs{F<1>() == 1, F<2>() == 2, F<3>() == 3};
+    auto fs2 = fs.clone();
+    fs.modify(F<1>() == 10);
+    fs2->modify(F<2>() == 20);
+    oxm::field_set fs_true_value{F<1>() == 10, F<2>() == 2, F<3>() == 3};
+    ASSERT_EQ(fs_true_value, fs);
+    ASSERT_EQ(1, fs2->load(F<1>()));
+    ASSERT_EQ(20, fs2->load(F<2>()));
+    ASSERT_EQ(3, fs2->load(F<3>()));
+
+}
+
 TEST(PacketParserTest, ModifyOutPort)
 {
     fluid_msg::of13::PacketIn pi(10, OFP_NO_BUFFER, 0, 0, 0, 0);
@@ -67,6 +110,7 @@ TEST(PacketParserTest, ModifyOutPort)
 
     // EXPECT_EQ(3, pkt.get_out_port());
 }
+
 
 TEST(PacketParserTest, ModifyValue)
 {

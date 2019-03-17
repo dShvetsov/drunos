@@ -104,6 +104,14 @@ public:
     const_iterator find(type t) const
     { return entries.find(field<>(t)); }
 
+    std::unique_ptr<Packet> clone() const override {
+        auto ret = std::make_unique<field_set>();
+        for (const auto& f : *this) {
+            ret->modify(f);
+        }
+        return ret;
+    }
+
     friend bool operator==(const field_set& lhs, const field_set& rhs)
     { return lhs.entries == rhs.entries; }
 

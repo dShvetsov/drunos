@@ -67,14 +67,17 @@ class PacketParser final : public SerializablePacket {
 
     uint8_t* access(oxm::type t) const;
 
+
 public:
-    PacketParser(fluid_msg::of13::PacketIn& pi, uint64_t from_dpid);
+    PacketParser(fluid_msg::of13::PacketIn& pi, uint64_t from_dpid, uint32_t out_port = 0);
 
     oxm::field<> load(oxm::mask<> mask) const override;
     void modify(oxm::field<> patch) override;
 
     size_t total_bytes() const override;
     size_t serialize_to(size_t buffer_size, void* buffer) const override;
+
+    std::unique_ptr<Packet> clone() const override;
 };
 
 } // namespace runos

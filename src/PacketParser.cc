@@ -209,11 +209,11 @@ void PacketParser::parse_l4(uint8_t protocol, uint8_t* data, size_t data_len)
     }
 }
 
-PacketParser::PacketParser(fluid_msg::of13::PacketIn& pi, uint64_t dpid)
+PacketParser::PacketParser(fluid_msg::of13::PacketIn& pi, uint64_t dpid, uint32_t out)
     : data(static_cast<uint8_t*>(pi.data()))
     , data_len(pi.data_len())
     , in_port(pi.match().in_port()->value())
-    , out_port(0)
+    , out_port(out)
     , switch_id(dpid)
 {
     ofb_bindings.fill(nullptr);
@@ -298,6 +298,27 @@ size_t PacketParser::serialize_to(size_t buffer_size, void* buffer) const
 size_t PacketParser::total_bytes() const
 {
     return data_len;
+}
+
+// TODO: testme
+std::unique_ptr<Packet> PacketParser::clone() const {
+    class FluidPacketHolder: public PacketProxy {
+    public:
+        FluidPacketHolder(std::shared_ptr<of13::PacketIn> pi, std::shared_ptr<Packet> pkt)
+        : PacketProxy(*pkt)
+        , pi(pi)
+        , pkt(pkt)
+        { }
+    private:
+        std::shared_ptr<of13::PacketIn> pi;
+        std::shared_ptr<Packet> pkt;
+    };
+
+    auto pi = std::make_shared<of13::PacketIn>(0x0, OFP_NO_BUFFER, 0, 0, 0, 0);
+    pi->add_oxm_field(new of13::InPort(in_port));
+    pi->data(data, data_len);
+    auto pkt = std::make_shared<PacketParser>(*pi, switch_id, out_port);
+    return std::make_unique<FluidPacketHolder>(pi, pkt);
 }
 
 } // namespace runos
