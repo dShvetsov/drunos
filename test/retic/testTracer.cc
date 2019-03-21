@@ -35,7 +35,7 @@ TEST(TracerTest, LoadMethod) {
     oxm::field_set fs{F<1>() == 1};
     policy p = handler([](Packet& pkt){
         pkt.load(F<1>());
-        return stop(); 
+        return stop();
     });
     Tracer tracer{p};
     auto trace = tracer.trace(fs);
@@ -46,9 +46,64 @@ TEST(TracerTest, TestMethod) {
     oxm::field_set fs{F<1>() == 1};
     policy p = handler([](Packet& pkt){
         pkt.test(F<1>() == 1);
-        return stop(); 
+        return stop();
     });
     Tracer tracer{p};
     auto trace = tracer.trace(fs);
     ASSERT_THAT(trace.values(), ElementsAre(test_node{F<1>() == 1, true}));
+}
+
+TEST(TracerTest, MergeTraceLoad) {
+    Trace trace1, trace2;
+    trace1.load(F<1>() == 1);
+    trace2.load(F<2>() == 2);
+    auto merged_trace = mergeTrace({trace1, trace2});
+    EXPECT_THAT(
+        merged_trace.values(),
+        ElementsAre(load_node{F<1>() == 1}, load_node{F<2>() == 2})
+    );
+}
+
+TEST(TracerTest, MergeTraceTest) {
+    Trace trace1, trace2;
+    trace1.test(F<1>() == 1, true);
+    trace2.test(F<2>() == 2, false);
+    auto merged_trace = mergeTrace({trace1, trace2});
+    EXPECT_THAT(
+        merged_trace.values(),
+        ElementsAre(test_node{F<1>() == 1, true}, test_node{F<2>() == 2, false})
+    );
+}
+
+TEST(TracerTest, MergeTraceTestCaching) {
+    Trace trace1, trace2, trace3;
+    trace1.test(F<1>() == 1, true);
+    trace2.test(F<1>() == 1, true);
+    trace3.load(F<1>() == 1);
+    auto merged_trace = mergeTrace({trace1, trace2, trace3});
+    EXPECT_THAT(
+        merged_trace.values(),
+        ElementsAre(test_node{F<1>() == 1, true})
+    );
+}
+
+TEST(TracerTest, MergeTraceLoadCaching) {
+    Trace trace1, trace2;
+    trace1.load(F<1>() == 1);
+    trace2.load(F<1>() == 1);
+    auto merged_trace = mergeTrace({trace1, trace2});
+    EXPECT_THAT(
+        merged_trace.values(),
+        ElementsAre(load_node{F<1>() == 1})
+    );
+}
+
+TEST(TracerTest, TestResults) {
+    Trace trace1, trace2;
+    trace1.load(F<1>() == 1);
+    trace1.setResult(modify(F<3>() << 3));
+    trace2.load(F<2>() == 2);
+    trace2.setResult(modify(F<4>() << 4));
+    auto merged_trace = mergeTrace({trace1, trace2});
+    EXPECT_EQ(merged_trace.result(), modify(F<3>() << 3) + modify(F<4>() << 4));
 }

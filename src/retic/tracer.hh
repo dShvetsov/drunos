@@ -2,9 +2,7 @@
 
 #include <stdexcept>
 #include <boost/optional.hpp>
-
 #include "policies.hh"
-
 #include "api/Packet.hh"
 #include "maple/Tracer.hh"
 
@@ -71,6 +69,8 @@ public:
 private:
     const policy& m_policy;
 };
+
+Trace mergeTrace(const std::vector<Trace>& trace, oxm::field_set cache = {});
 
 // For test operators
 

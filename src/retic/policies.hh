@@ -41,9 +41,6 @@ using policy =
 struct PacketFunction {
     uint64_t id;
     std::function<policy(Packet& pkt)> function;
-    friend bool operator==(const PacketFunction& lhs, const PacketFunction& rhs) {
-        return lhs.id == rhs.id;
-    }
 };
 
 struct Sequential {
@@ -102,6 +99,57 @@ inline
 policy operator|(policy lhs, policy rhs)
 {
     return Parallel{lhs, rhs};
+}
+
+// Operators
+inline bool operator==(const Stop&, const Stop&) {
+    return true;
+}
+
+inline bool operator==(const Filter& lhs, const Filter& rhs) {
+    return lhs.field == rhs.field;
+}
+
+inline bool operator==(const Modify& lhs, const Modify& rhs) {
+    return lhs.field == rhs.field;
+}
+
+inline bool operator==(const PacketFunction& lhs, const PacketFunction& rhs) {
+    return lhs.id == rhs.id;
+}
+
+inline bool operator==(const Sequential& lhs, const Sequential& rhs) {
+    return lhs.one == rhs.one && lhs.two == rhs.two;
+}
+
+inline bool operator==(const Parallel& lhs, const Parallel& rhs) {
+    // TODO: this function needs test. A fully test for such cases (a + b + c) == (b + c + a) == (c + b + a) ... etc
+    return (lhs.one == rhs.one && lhs.two == rhs.two) ||
+           (lhs.one == rhs.two && lhs.two == rhs.one);
+}
+
+inline std::ostream& operator<<(std::ostream& out, const Filter& fil) {
+    return out << "filter( " << fil.field << " )";
+}
+
+inline std::ostream& operator<<(std::ostream& out, const Stop& stop) {
+    return out << "stop";
+}
+
+inline std::ostream& operator<<(std::ostream& out, const Modify& mod) {
+    return out << "modify( " << mod.field << " )";
+}
+
+inline std::ostream& operator<<(std::ostream& out, const Sequential& seq) {
+    return out << seq.one << " >> " << seq.two;
+}
+
+inline std::ostream& operator<<(std::ostream& out, const Parallel& par) {
+    return out << par.one << " + " << par.two;
+}
+
+inline std::ostream& operator<<(std::ostream& out, const PacketFunction& func) {
+    return out << " function ";
 }
 
 } // namespace retic

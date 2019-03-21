@@ -7,6 +7,8 @@
 namespace runos {
 namespace retic {
 
+
+// TODO: remove this class
 class Dumper : public boost::static_visitor<> {
     public:
 
@@ -44,6 +46,7 @@ class Dumper : public boost::static_visitor<> {
 private:
     std::ostream& m_os;
 };
+
 
 } // namespace retic
 } // namespace runos
