@@ -48,8 +48,8 @@ struct load_node {
 class Augmention : public boost::static_visitor<> {
 public:
     struct inconsistent_trace: public std::exception { };
-    Augmention(node& root)
-        : m_root(root), current(root)
+    Augmention(node* root)
+        : current(root)
     { }
 
     void operator()(tracer::load_node& ln);
@@ -57,8 +57,7 @@ public:
     void finish(policy pol);
 
 private:
-    node& m_root;
-    node& current;
+    node* current;
 };
 
 std::ostream& operator<<(std::ostream& out, const unexplored& u);

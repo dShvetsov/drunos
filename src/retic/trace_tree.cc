@@ -5,40 +5,39 @@ namespace retic {
 namespace trace_tree {
 
 void Augmention::operator()(tracer::load_node& ln) {
-    if (boost::get<unexplored>(&current)) {
-        current = load_node{oxm::mask<>(ln.field), {} };
-        current = boost::get<load_node>(current)
-                  .cases
+    if (boost::get<unexplored>(current)) {
+        *current = load_node{oxm::mask<>(ln.field), {} };
+        current = &boost::get<load_node>(current)->cases
                   .emplace(ln.field.value_bits(), unexplored{})
                   .first->second; // inserter value
     }
-    else if (load_node* load = boost::get<load_node>(&current); load != nullptr) {
+    else if (load_node* load = boost::get<load_node>(current); load != nullptr) {
         if (load->mask != oxm::mask<>(ln.field)) {
             throw inconsistent_trace();
         }
-        current = load->cases[ln.field.value_bits()];
+        current = &load->cases[ln.field.value_bits()];
     } else {
         throw inconsistent_trace();
     }
 }
 
 void Augmention::operator()(tracer::test_node& tn) {
-    if (boost::get<unexplored>(&current)) {
-        current = test_node{tn.field, unexplored{}, unexplored{}};
-        current = tn.result ? boost::get<test_node>(current).positive :
-                              boost::get<test_node>(current).negative ;
-    } else if (test_node* test = boost::get<test_node>(&current); test != nullptr) {
+    if (boost::get<unexplored>(current)) {
+        *current = test_node{tn.field, unexplored{}, unexplored{}};
+        current = tn.result ? &boost::get<test_node>(current)->positive :
+                              &boost::get<test_node>(current)->negative ;
+    } else if (test_node* test = boost::get<test_node>(current); test != nullptr) {
         if (test->need != tn.field) {
             throw inconsistent_trace();
         }
-        current = tn.result ? test->positive : test->negative;
+        current = tn.result ? &test->positive : &test->negative;
     }
 }
 
 void Augmention::finish(policy p) {
-    if (boost::get<unexplored>(&current)) {
-        current = leaf_node{p};
-    } else if (leaf_node* leaf = boost::get<leaf_node>(&current); leaf != nullptr) {
+    if (boost::get<unexplored>(current)) {
+        *current = leaf_node{p};
+    } else if (leaf_node* leaf = boost::get<leaf_node>(current); leaf != nullptr) {
         leaf->p = p;
     } else {
         throw inconsistent_trace();

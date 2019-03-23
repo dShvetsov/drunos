@@ -18,9 +18,9 @@ template <size_t N>
 struct F : oxm::define_type< F<N>, 0, N, 32, uint32_t, uint32_t, true>
 { };
 
-TEST(DISABLED_TraceTreeTest, CreateTraceTree) {
+TEST(TraceTreeTest, CreateTraceTree) {
     trace_tree::node root = trace_tree::unexplored{};
-    trace_tree::Augmention augmenter(root);
+    trace_tree::Augmention augmenter(&root);
     oxm::field<> f = F<1>() == 1;
     tracer::trace_node n = tracer::load_node{f};
     boost::apply_visitor(augmenter, n);
