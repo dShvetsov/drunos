@@ -9,6 +9,8 @@ set(SOURCES
     policies.hh
     fdd_compiler.cc
     fdd_compiler.hh
+    trace_tree.hh
+    trace_tree.cc
     tracer.hh
     tracer.cc
 )

@@ -7,6 +7,7 @@ add_executable(runReticTest
         fddTranslatorTest.cc
         testBackend.cc
         testTracer.cc
+        testTraceTree.cc
 )
 
 target_link_libraries(runReticTest
