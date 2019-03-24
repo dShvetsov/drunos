@@ -47,9 +47,17 @@ void Retic::init(Loader* loader, const Config& root_config)
     m_main_policy = config_get(config, "main", "__builtin_donothing__");
     LOG(INFO) << "Main policy: " << m_main_policy;
 
-    m_fdd = retic::fdd::compile(m_policies[m_main_policy]);
 
     QObject::connect(ctrl, &Controller::switchUp, this, &Retic::onSwitchUp);
+}
+
+void Retic::startUp(Loader* loader) {
+    try {
+        m_fdd = retic::fdd::compile(m_policies.at(m_main_policy));
+    } catch (std::out_of_range& oor) {
+        LOG(ERROR) << "Can't find policy " << m_main_policy;
+        throw;
+    }
 }
 
 void Retic::registerPolicy(std::string name, retic::policy policy) {

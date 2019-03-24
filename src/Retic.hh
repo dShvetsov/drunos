@@ -23,6 +23,7 @@ class Retic : public Application
 SIMPLE_APPLICATION(Retic, "retic")
 public:
     void init(Loader* loader, const Config& config) override;
+    void startUp(Loader* loader) override;
     void registerPolicy(std::string name, runos::retic::policy policy);
 
     const std::string& getMainName() const { return m_main_policy; }
