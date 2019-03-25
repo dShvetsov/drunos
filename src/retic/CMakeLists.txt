@@ -15,6 +15,8 @@ set(SOURCES
     trace_tree.cc
     tracer.hh
     tracer.cc
+    leaf_applier.cc
+    leaf_applier.hh
 
 )
 
