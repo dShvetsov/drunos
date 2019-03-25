@@ -61,8 +61,8 @@ public:
         : current(root)
     { }
 
-    void operator()(tracer::load_node& ln);
-    void operator()(tracer::test_node& tn);
+    void operator()(const tracer::load_node& ln);
+    void operator()(const tracer::test_node& tn);
     void finish(policy pol);
 
 private:

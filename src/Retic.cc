@@ -7,6 +7,10 @@
 #include "retic/fdd.hh"
 #include "retic/fdd_compiler.hh"
 #include "retic/fdd_translator.hh"
+#include "retic/traverse_fdd.hh"
+#include "retic/tracer.hh"
+#include "retic/leaf_applier.hh"
+#include "retic/trace_tree.hh"
 #include "PacketParser.hh"
 
 REGISTER_APPLICATION(Retic, {"controller", ""})
@@ -20,8 +24,21 @@ void Retic::init(Loader* loader, const Config& root_config)
 
     ctrl->registerHandler<of13::PacketIn>([=](of13::PacketIn& pi, SwitchConnectionPtr conn) {
         LOG(INFO) << "PacketIn";
+
         uint8_t buffer[1500];
         PacketParser pp{pi, conn->dpid()};
+
+        retic::fdd::Traverser traverser{pp};
+        auto& leaf = boost::apply_visitor(traverser, m_fdd);
+        auto traces = retic::getTraces(leaf, pp);
+        retic::tracer::Trace merged_trace = retic::tracer::mergeTrace(traces);
+        retic::trace_tree::Augmention augmenter( &(leaf.maple_tree) );
+        for (auto& node: merged_trace.values()) {
+            boost::apply_visitor(augmenter, node);
+        }
+        augmenter.finish(merged_trace.result());
+
+
         retic::Applier runtime{pp};
         boost::apply_visitor(runtime, m_policies[m_main_policy]);
         for (auto& [p, meta]: runtime.results()) {

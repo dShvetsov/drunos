@@ -4,7 +4,7 @@ namespace runos {
 namespace retic {
 namespace trace_tree {
 
-void Augmention::operator()(tracer::load_node& ln) {
+void Augmention::operator()(const tracer::load_node& ln) {
     if (boost::get<unexplored>(current)) {
         *current = load_node{oxm::mask<>(ln.field), {} };
         current = &boost::get<load_node>(current)->cases
@@ -21,7 +21,7 @@ void Augmention::operator()(tracer::load_node& ln) {
     }
 }
 
-void Augmention::operator()(tracer::test_node& tn) {
+void Augmention::operator()(const tracer::test_node& tn) {
     if (boost::get<unexplored>(current)) {
         *current = test_node{tn.field, unexplored{}, unexplored{}};
         current = tn.result ? &boost::get<test_node>(current)->positive :
