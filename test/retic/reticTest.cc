@@ -304,3 +304,10 @@ TEST(PolicyTest, IdTest) {
     ));
 }
 
+TEST(DISABLED_EqualPolicyTest, ThreeSeq) {
+    policy p1 = modify(F<1>() == 1) >> modify(F<2>() == 2) >> id();
+    policy p2 = modify(F<2>() == 2) >> id();
+    p2 = modify(F<1>() == 1) >> p2;
+    EXPECT_EQ(p1, p2);
+}
+

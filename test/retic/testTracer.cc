@@ -53,6 +53,18 @@ TEST(TracerTest, TestMethod) {
     ASSERT_THAT(trace.values(), ElementsAre(test_node{F<1>() == 1, true}));
 }
 
+TEST(TracerTest, TestModify) {
+    oxm::field_set fs{F<1>() == 1};
+    policy p = handler([](Packet& pkt){
+        pkt.modify(F<1>() == 1);
+        pkt.modify(F<2>() == 2);
+        return id();
+    });
+    Tracer tracer{p};
+    auto trace = tracer.trace(fs);
+    ASSERT_THAT(trace.result(), modify(F<1>() == 1) >> (modify(F<2>() == 2) >> id()));
+}
+
 TEST(TracerTest, MergeTraceLoad) {
     Trace trace1, trace2;
     trace1.load(F<1>() == 1);

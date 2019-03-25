@@ -9,6 +9,25 @@ namespace runos {
 namespace retic {
 namespace tracer {
 
+
+// TODO: merge with src/Maple.cc ModTracingPacket
+struct ModTrackingPacket final : public PacketProxy {
+    oxm::field_set m_mods;
+public:
+    explicit ModTrackingPacket(Packet& pkt)
+        : PacketProxy(pkt)
+    { }
+
+    void modify(const oxm::field<> patch) override
+    {
+        pkt.modify(patch);
+        m_mods.modify(patch);
+    }
+
+    const oxm::field_set& mods() const
+    { return m_mods; }
+};
+
 void Trace::load(oxm::field<> unexplored) {
     auto ln = load_node{unexplored};
     m_trace_impl.push_back(ln);
@@ -19,11 +38,17 @@ void Trace::test(oxm::field<> field, bool result) {
     m_trace_impl.push_back(tn);
 }
 
+
 Trace Tracer::trace(Packet& pkt) const {
     Trace ret;
     maple::TraceablePacketImpl traceable_pkt(pkt, ret);
+    ModTrackingPacket mod_tracking(traceable_pkt);
     auto f = boost::get<PacketFunction>(m_policy);
-    ret.setResult(f.function(traceable_pkt));
+    policy p = f.function(mod_tracking);
+    for (auto& mod: mod_tracking.mods()) {
+        p = modify(mod) >> p;
+    }
+    ret.setResult(p);
     return ret;
 }
 
