@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <memory>
 
 #include "retic/policies.hh"
 #include "retic/applier.hh"
@@ -17,13 +18,15 @@ template <size_t N>
 struct F : oxm::define_type< F<N>, 0, N, 32, uint32_t, uint32_t, true>
 { };
 
+using PacketPtr = std::shared_ptr<Packet>;
+
 TEST(FilterTest, TrueFilter)
 {
     policy p = filter(F<1>() == 100);
     oxm::field_set packet = {
         { F<1>() == 100 }
     };
-    Applier<oxm::field_set> applier{packet};
+    Applier applier{packet};
     boost::apply_visitor(applier, p);
 
     auto& results = applier.results();
@@ -40,7 +43,7 @@ TEST(FilterTest, FalseFilter)
     oxm::field_set packet = {
         { F<1>() == 200 }
     };
-    Applier<oxm::field_set> applier{packet};
+    Applier applier{packet};
     boost::apply_visitor(applier, p);
 
     auto& results = applier.results();
@@ -55,7 +58,7 @@ TEST(StopTest, StopTest)
 {
     policy p = stop();
     oxm::field_set packet;
-    Applier<oxm::field_set> applier{packet};
+    Applier applier{packet};
     boost::apply_visitor(applier, p);
 
     auto& results = applier.results();
@@ -71,12 +74,12 @@ TEST(ForwardTest, ForwardToPort)
 {
     policy p = fwd(1);
     oxm::field_set packet;
-    Applier<oxm::field_set> applier{packet};
+    Applier applier{packet};
     boost::apply_visitor(applier, p);
     auto& results = applier.results();
     for (auto& [pkt, result] : results)
     {
-        EXPECT_TRUE(pkt.test(oxm::out_port() == 1));
+        EXPECT_TRUE(pkt->test(oxm::out_port() == 1));
     }
 }
 
@@ -87,15 +90,15 @@ TEST(ModifyTest, ModifyField)
         { F<1>() == 200 },
         { F<2>() == 300 }
     };
-    Applier<oxm::field_set> applier{packet};
+    Applier applier{packet};
     boost::apply_visitor(applier, p);
 
     auto& results = applier.results();
     for (auto& [pkt,results] : results) {
-        EXPECT_TRUE(pkt.test(F<1>() == 100)) <<
+        EXPECT_TRUE(pkt->test(F<1>() == 100)) <<
             "Modify must change the field";
 
-        EXPECT_TRUE(pkt.test(F<2>() == 300)) <<
+        EXPECT_TRUE(pkt->test(F<2>() == 300)) <<
             "Modify must not change other field";
     }
 }
@@ -105,12 +108,12 @@ TEST(SeqTest, SecondPolicy)
     policy seq_policy = fwd(1) >> fwd(2);
 
     oxm::field_set packet;
-    Applier<oxm::field_set> applier{packet};
+    Applier applier{packet};
 
     boost::apply_visitor(applier, seq_policy);
     auto& results = applier.results();
     for (auto& [pkt, result] : results) {
-        EXPECT_TRUE(pkt.test(oxm::out_port() == 2)) << "Second policy must be applied";
+        EXPECT_TRUE(pkt->test(oxm::out_port() == 2)) << "Second policy must be applied";
     }
 }
 
@@ -122,13 +125,13 @@ TEST(SeqTest, AllPolicy)
         {F<1>() == 0},
         {F<2>() == 0}
     };
-    Applier<oxm::field_set> applier{packet};
+    Applier applier{packet};
 
     boost::apply_visitor(applier, seq_policy);
     auto& results = applier.results();
     for (auto& [pkt, result] : results) {
-        EXPECT_TRUE(pkt.test(F<1>() == 100)) << "All policy must be applied";
-        EXPECT_TRUE(pkt.test(F<2>() == 100)) << "All policy must be applied";
+        EXPECT_TRUE(pkt->test(F<1>() == 100)) << "All policy must be applied";
+        EXPECT_TRUE(pkt->test(F<2>() == 100)) << "All policy must be applied";
     }
 }
 
@@ -138,12 +141,12 @@ TEST(SeqTest, StopPolicy)
     policy seq_policy = stop() >> fwd(2);
 
     oxm::field_set packet;
-    Applier<oxm::field_set> applier{packet};
+    Applier applier{packet};
 
     boost::apply_visitor(applier, seq_policy);
     auto& results = applier.results();
     for (auto& [pkt, result] : results) {
-        EXPECT_TRUE(pkt.test(oxm::out_port() == 2)) <<
+        EXPECT_TRUE(pkt->test(oxm::out_port() == 2)) <<
             "Second policy must not be applied if pipeline is stopped";
     }
 }
@@ -156,15 +159,15 @@ TEST(ParallelTest, ParallelPolicy)
         {F<1>() == 0}
     };
 
-    Applier<oxm::field_set> applier{packet};
+    Applier applier{packet};
 
     boost::apply_visitor(applier, parallel);
     auto& results = applier.results();
     using namespace ::testing;
     ASSERT_THAT(results, SizeIs(2));
     EXPECT_THAT(results, UnorderedElementsAre(
-                    Key(ResultOf([](auto& pkt){return pkt.test(F<1>() == 100);}, true)),
-                    Key(ResultOf([](auto& pkt){return pkt.test(F<1>() == 200);}, true))
+                    Key(ResultOf([](PacketPtr pkt){return pkt->test(F<1>() == 100);}, true)),
+                    Key(ResultOf([](PacketPtr pkt){return pkt->test(F<1>() == 200);}, true))
                 ));
 }
 
@@ -179,23 +182,23 @@ TEST(ComplexTest, Test1)
         {F<2>() == 200}
     };
 
-    Applier<oxm::field_set> applier{packet};
+    Applier applier{packet};
     boost::apply_visitor(applier, all);
     auto& results = applier.results();
     using namespace ::testing;
 
     EXPECT_THAT(results, Contains(
-                Key(ResultOf([](auto& pkt){
-                        return pkt.test(F<1>() == 300) &&
-                               pkt.test(F<2>() == 200) &&
-                               pkt.test(oxm::out_port() == 666);
+                Key(ResultOf([](PacketPtr pkt){
+                        return pkt->test(F<1>() == 300) &&
+                               pkt->test(F<2>() == 200) &&
+                               pkt->test(oxm::out_port() == 666);
                         }, true))
         ));
     EXPECT_THAT(results, Contains(
-                Key(ResultOf([](auto& pkt){
-                        return pkt.test(F<1>() == 100) &&
-                               pkt.test(F<2>() == 200) &&
-                               pkt.test(oxm::out_port() == 123);
+                Key(ResultOf([](PacketPtr pkt){
+                        return pkt->test(F<1>() == 100) &&
+                               pkt->test(F<2>() == 200) &&
+                               pkt->test(oxm::out_port() == 123);
                         }, true))
         ));
 
@@ -212,13 +215,13 @@ TEST(FunctionTest, SimpleFunction)
         {F<1>() == 1}
     };
 
-    Applier<oxm::field_set> applier{packet};
+    Applier applier{packet};
     boost::apply_visitor(applier, h);
     auto& results = applier.results();
     using namespace ::testing;
     ASSERT_THAT(results, UnorderedElementsAre(
-                Key(ResultOf([](auto& pkt) {
-                        return pkt.test(F<1>() == 100);
+                Key(ResultOf([](PacketPtr pkt) {
+                        return pkt->test(F<1>() == 100);
                     }, true))
         ));
 }
@@ -239,13 +242,13 @@ TEST(FunctionTest, FunctionWithFilter1)
         {F<1>() == 100}
     };
 
-    Applier<oxm::field_set> applier{packet};
+    Applier applier{packet};
     boost::apply_visitor(applier, h);
     auto& results = applier.results();
     using namespace ::testing;
     ASSERT_THAT(results, UnorderedElementsAre(
-                Key(ResultOf([](auto& pkt) {
-                        return pkt.test(oxm::out_port() == 123);
+                Key(ResultOf([](PacketPtr pkt) {
+                        return pkt->test(oxm::out_port() == 123);
                     }, true))
         ));
 }
@@ -266,13 +269,13 @@ TEST(FunctionTest, FunctionWithFilter2)
         {F<1>() == 200}
     };
 
-    Applier<oxm::field_set> applier{packet};
+    Applier applier{packet};
     boost::apply_visitor(applier, h);
     auto& results = applier.results();
     using namespace ::testing;
     ASSERT_THAT(results, UnorderedElementsAre(
-                Key(ResultOf([](auto& pkt) {
-                        return pkt.test(oxm::out_port() == 321);
+                Key(ResultOf([](PacketPtr pkt) {
+                        return pkt->test(oxm::out_port() == 321);
                     }, true))
         ));
 }
@@ -282,25 +285,25 @@ TEST(FunctionTest, OutputToTwoPorts)
     policy p = handler([](Packet& pkt) {return fwd(1) + fwd(2); });
 
     oxm::field_set pkt {oxm::out_port() == 0};
-    Applier<oxm::field_set> applier{pkt};
+    Applier applier{pkt};
     boost::apply_visitor(applier, p);
     auto& results = applier.results();
     using namespace ::testing;
     ASSERT_THAT(results, UnorderedElementsAre(
-        Key(oxm::field_set{oxm::out_port() == 1}),
-        Key(oxm::field_set{oxm::out_port() == 2})
+        Key(ResultOf([](PacketPtr p) {return p->load(oxm::out_port());}, 1)),
+        Key(ResultOf([](PacketPtr p) {return p->load(oxm::out_port());}, 2))
     ));
 }
 
 TEST(PolicyTest, IdTest) {
     policy p = id();
     oxm::field_set pkt {F<1>() == 1};
-    Applier<oxm::field_set> applier{pkt};
+    Applier applier{pkt};
     boost::apply_visitor(applier, p);
     auto& results = applier.results();
     using namespace ::testing;
     ASSERT_THAT(results, UnorderedElementsAre(
-        Key(oxm::field_set{F<1>() == 1})
+        Key(ResultOf([](PacketPtr p) {return p->load(F<1>());}, 1))
     ));
 }
 

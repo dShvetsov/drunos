@@ -22,20 +22,20 @@ void Retic::init(Loader* loader, const Config& root_config)
         LOG(INFO) << "PacketIn";
         uint8_t buffer[1500];
         PacketParser pp{pi, conn->dpid()};
-        retic::Applier<PacketParser> runtime{pp};
+        retic::Applier runtime{pp};
         boost::apply_visitor(runtime, m_policies[m_main_policy]);
         for (auto& [p, meta]: runtime.results()) {
-            const Packet& pkt{p};
+            PacketParser* pp_pkt = packet_cast<PacketParser*>(*p);
             of13::PacketOut po;
             po.xid(0x123);
             po.buffer_id(OFP_NO_BUFFER);
-            uint32_t out_port = pkt.load(oxm::out_port());
+            uint32_t out_port = p->load(oxm::out_port());
             LOG(INFO) << "Move packet to " << out_port;
             if (out_port != 0) {
-                po.in_port(pkt.load(oxm::in_port()));
+                po.in_port(p->load(oxm::in_port()));
                 po.add_action(new of13::OutputAction(out_port, 0));
-                size_t len = p.total_bytes();
-                p.serialize_to(sizeof(buffer), buffer);
+                size_t len = pp_pkt->total_bytes();
+                pp_pkt->serialize_to(sizeof(buffer), buffer);
                 po.data(buffer, len);
                 conn->send(po);
             }

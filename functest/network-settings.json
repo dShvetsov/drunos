@@ -96,6 +96,32 @@
     "retic": {
         "main": "two_switch"
     }
+},
+
+"func": {
+    "services": [
+        "retic",
+        "retic-cli",
+        "test-apps"
+    ],
+
+    "tables": {
+        "retic" : 0
+    },
+
+    "controller": {
+        "port": 6652,
+         "nthreads": 1,
+         "cbench": false
+    },
+
+    "loader": {
+        "threads": 2
+    },
+
+    "retic": {
+        "main": "func"
+    }
 }
 
 }

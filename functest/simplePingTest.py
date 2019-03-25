@@ -55,7 +55,7 @@ def test_dropall():
     assert loss == 100
 
 
-def switch_test():
+def test_two_switches():
     topo = mininet.topo.LinearTopo(k=2, n=1, sopts={'protocols': 'OpenFlow13'})
     net = Mininet(topo, controller=lambda name: RUNOS(name, profile='two_switch'))
     net.start()
@@ -64,6 +64,15 @@ def switch_test():
     net.stop()
     assert loss == 0
 
+
+def test_functions():
+    topo = mininet.topo.SingleSwitchTopo(k=2, sopts={'protocols': 'OpenFlow13'})
+    net = Mininet(topo, controller=lambda name: RUNOS(name, profile='func'))
+    net.start()
+    time.sleep(0.5)
+    loss = net.pingAll()
+    net.stop()
+    assert loss == 0
 
 
 tests = [test_twoports, test_twoinports]

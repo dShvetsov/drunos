@@ -1,6 +1,7 @@
 #pragma once
 
 #include "policies.hh"
+#include "api/Packet.hh"
 
 namespace runos {
 namespace retic {
@@ -18,14 +19,12 @@ private:
     bool m_is_stopped = false;
 };
 
-template <class P> // enable if P is baseof Packet
 class Applier : public boost::static_visitor<> {
     public:
-
-    using PacketType = P;
-    using PacketsWithMeta = std::vector<std::pair<PacketType, Meta>>;
-Applier(PacketType pkt)
-        : m_pkts{{std::forward<PacketType>(pkt), Meta{}}}
+    using PacketPtr = std::shared_ptr<Packet>;
+    using PacketsWithMeta = std::vector<std::pair<PacketPtr, Meta>>;
+    Applier(Packet& pkt)
+        : m_pkts{{pkt.clone(), Meta{}}}
     { }
 
     Applier(const PacketsWithMeta& pkts)
@@ -34,7 +33,7 @@ Applier(PacketType pkt)
 
     void operator()(const Filter& fil) {
         for (auto& [pkt, meta] : m_pkts) {
-            if (!pkt.test(fil.field)) {
+            if (!pkt->test(fil.field)) {
                 meta.stop();
             }
         }
@@ -48,7 +47,7 @@ Applier(PacketType pkt)
 
     void operator()(const Modify& mod) {
         for (auto& [pkt, res] : m_pkts) {
-            pkt.modify(mod.field);
+            pkt->modify(mod.field);
         }
     }
 
@@ -64,20 +63,24 @@ Applier(PacketType pkt)
     }
 
     void operator()(const Parallel& par) {
-        auto save_pkts = m_pkts;
+        PacketsWithMeta cloned;
+        cloned.reserve(m_pkts.size());
+        for (auto& [pkt, meta]: m_pkts) {
+            cloned.push_back({pkt->clone(), meta});
+        }
         boost::apply_visitor(*this, par.one);
-        std::swap(save_pkts, m_pkts);
+        std::swap(cloned, m_pkts);
         boost::apply_visitor(*this, par.two);
 
-        std::swap(save_pkts, m_pkts);
-        m_pkts.reserve(m_pkts.size() + save_pkts.size());
-        m_pkts.insert(m_pkts.end(), save_pkts.begin(), save_pkts.end());
+        std::swap(cloned, m_pkts);
+        m_pkts.reserve(m_pkts.size() + cloned.size());
+        m_pkts.insert(m_pkts.end(), cloned.begin(), cloned.end());
     }
 
     void operator()(const PacketFunction& func) {
         for (auto& [pkt, meta] : m_pkts) {
             if (not meta.isStopped()) {
-                policy p = func.function(pkt);
+                policy p = func.function(*pkt);
                 boost::apply_visitor(*this, p);
             }
         }
