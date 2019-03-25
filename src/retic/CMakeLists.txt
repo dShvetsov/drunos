@@ -9,10 +9,13 @@ set(SOURCES
     policies.hh
     fdd_compiler.cc
     fdd_compiler.hh
+    traverse_fdd.cc
+    traverse_fdd.hh
     trace_tree.hh
     trace_tree.cc
     tracer.hh
     tracer.cc
+
 )
 
 add_library(runos_retic STATIC ${SOURCES})
