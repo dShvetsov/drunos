@@ -130,10 +130,12 @@ void Of13Backend::installBarrier(oxm::field_set match, uint16_t prio) {
             LOG(WARNING) << "Needed to install rule. But there is no such switch";
             return;
         }
-        driver_it->second->installRule(match, prio, act, m_table);
+        auto flow = driver_it->second->installRule(match, prio, act, m_table);
+        m_storage.push_back(flow);
     } else {
         for (auto [dpid, driver]: m_drivers) {
-            driver->installRule(match, prio, act, m_table);
+            auto flow = driver->installRule(match, prio, act, m_table);
+            m_storage.push_back(flow);
         }
     }
 }
