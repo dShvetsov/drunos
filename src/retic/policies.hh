@@ -20,6 +20,8 @@ public:
 
 class Stop { };
 
+class Id { };
+
 struct Modify {
     oxm::field<> field;
 };
@@ -31,6 +33,7 @@ struct PacketFunction;
 using policy =
     boost::variant<
         Stop,
+        Id,
         Filter,
         Modify,
         boost::recursive_wrapper<PacketFunction>,
@@ -70,6 +73,11 @@ policy stop() {
 }
 
 inline
+policy id() {
+    return Id();
+}
+
+inline
 policy filter(oxm::field<> f)
 {
     return Filter{f};
@@ -106,6 +114,10 @@ inline bool operator==(const Stop&, const Stop&) {
     return true;
 }
 
+inline bool operator==(const Id&, const Id&) {
+    return true;
+}
+
 inline bool operator==(const Filter& lhs, const Filter& rhs) {
     return lhs.field == rhs.field;
 }
@@ -134,6 +146,10 @@ inline std::ostream& operator<<(std::ostream& out, const Filter& fil) {
 
 inline std::ostream& operator<<(std::ostream& out, const Stop& stop) {
     return out << "stop";
+}
+
+inline std::ostream& operator<<(std::ostream& out, const Id&) {
+    return out << "id";
 }
 
 inline std::ostream& operator<<(std::ostream& out, const Modify& mod) {

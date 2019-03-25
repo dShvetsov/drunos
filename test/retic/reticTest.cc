@@ -292,3 +292,15 @@ TEST(FunctionTest, OutputToTwoPorts)
     ));
 }
 
+TEST(PolicyTest, IdTest) {
+    policy p = id();
+    oxm::field_set pkt {F<1>() == 1};
+    Applier<oxm::field_set> applier{pkt};
+    boost::apply_visitor(applier, p);
+    auto& results = applier.results();
+    using namespace ::testing;
+    ASSERT_THAT(results, UnorderedElementsAre(
+        Key(oxm::field_set{F<1>() == 1})
+    ));
+}
+

@@ -4,6 +4,7 @@
 #include "retic/fdd.hh"
 #include "retic/fdd_compiler.hh"
 #include "retic/policies.hh"
+#include "retic/traverse_fdd.hh"
 #include "oxm/openflow_basic.hh"
 
 using namespace runos;
@@ -52,6 +53,13 @@ TEST(FddCompilerTest, StopCompile) {
     fdd::diagram diagram = fdd::compile(p);
     fdd::leaf leaf = boost::get<fdd::leaf>(diagram);
     ASSERT_TRUE(leaf.sets.empty());
+}
+
+TEST(FddCompilerTest, IdCompile) {
+    policy p = id();
+    fdd::diagram diagram = fdd::compile(p);
+    fdd::diagram true_value = fdd::leaf{{ oxm::field_set{} }};
+    ASSERT_EQ(diagram, true_value);
 }
 
 TEST(FddCompilerTest, Modify) {
@@ -654,5 +662,20 @@ TEST(FddCompilerTest, SeqAction2If) {
     fdd::diagram result = boost::apply_visitor(fdd::sequential_composition{}, d1, d2);
     fdd::diagram true_value = fdd::leaf{{ {oxm::field_set{F<1>() == 1, F<2>() == 2}, pf2}}};
     ASSERT_EQ(true_value, result);
+}
+
+TEST(FddTraverseTest, FddTraverse) {
+    fdd::diagram d = fdd::node{
+        F<1>() == 1,
+        fdd::leaf{{ oxm::field_set{F<2>() == 2}}},
+        fdd::leaf{{ oxm::field_set{F<3>() == 3}}}
+    };
+    oxm::field_set fs1{F<1>() == 1};
+    oxm::field_set fs2{F<1>() == 2};
+    fdd::Traverser traverser1{fs1}, traverser2{fs2};
+    fdd::leaf l1 = boost::apply_visitor(traverser1, d);
+    fdd::leaf l2 = boost::apply_visitor(traverser2, d);
+    EXPECT_EQ(l1, fdd::leaf{{ oxm::field_set{F<2>() == 2}}});
+    EXPECT_EQ(l2, fdd::leaf{{ oxm::field_set{F<3>() == 3}}});
 }
 

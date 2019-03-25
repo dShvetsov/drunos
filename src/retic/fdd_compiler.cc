@@ -30,6 +30,9 @@ diagram Compiler::operator()(const Modify& mod) const {
 diagram Compiler::operator()(const Stop& stop) const {
     return leaf{};
 }
+diagram Compiler::operator()(const Id& id) const {
+    return leaf{{oxm::field_set{}}};
+}
 diagram Compiler::operator()(const Sequential& s) const {
     sequential_composition dispatcher;
     diagram d1 = boost::apply_visitor(*this, s.one);

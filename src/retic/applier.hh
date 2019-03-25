@@ -24,8 +24,7 @@ class Applier : public boost::static_visitor<> {
 
     using PacketType = P;
     using PacketsWithMeta = std::vector<std::pair<PacketType, Meta>>;
-
-    Applier(PacketType pkt)
+Applier(PacketType pkt)
         : m_pkts{{std::forward<PacketType>(pkt), Meta{}}}
     { }
 
@@ -58,6 +57,10 @@ class Applier : public boost::static_visitor<> {
         if (not m_pkts.at(0).second.isStopped()) {
             boost::apply_visitor(*this, seq.two);
         }
+    }
+
+    void operator()(const Id& id) {
+        // do nothing with packet
     }
 
     void operator()(const Parallel& par) {

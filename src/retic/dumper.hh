@@ -43,6 +43,10 @@ class Dumper : public boost::static_visitor<> {
     void operator()(const PacketFunction& func) {
         m_os << " function ";
     }
+
+    void operator()(const Id& id) {
+        m_os << " id ";
+    }
 private:
     std::ostream& m_os;
 };

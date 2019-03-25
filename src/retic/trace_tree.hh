@@ -3,6 +3,7 @@
 // TODO: Try to reuse maple/TraceTree.hh
 
 #include <exception>
+#include <memory>
 #include <unordered_map>
 #include <ostream>
 
@@ -16,12 +17,20 @@
 
 namespace runos {
 namespace retic {
+
+// forward declaration
+// TODO: UnhackMe
+namespace fdd {
+    struct diagram_holder;
+}
+
 namespace trace_tree {
 
 struct unexplored {};
 
 struct leaf_node {
     policy p;
+    std::shared_ptr<fdd::diagram_holder> kat_diagram;
 };
 
 struct test_node;

@@ -26,6 +26,7 @@ public:
     diagram operator()(const Filter& fil) const;
     diagram operator()(const Modify& mod) const;
     diagram operator()(const Stop& stop) const;
+    diagram operator()(const Id& stop) const;
     diagram operator()(const Sequential&) const;
     diagram operator()(const Parallel&) const;
     diagram operator()(const PacketFunction&) const;

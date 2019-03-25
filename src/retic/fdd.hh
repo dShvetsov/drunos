@@ -10,6 +10,7 @@
 #include <oxm/field_set.hh>
 
 #include "policies.hh"
+#include "trace_tree.hh"
 
 namespace runos {
 namespace retic {
@@ -81,6 +82,7 @@ struct action_unit {
 
 struct leaf {
     std::vector<action_unit> sets;
+    trace_tree::node maple_tree;
 };
 
 
@@ -97,6 +99,10 @@ struct node {
     oxm::field<> field;
     diagram positive;
     diagram negative;
+};
+
+struct diagram_holder {
+    diagram value;
 };
 
 } // namespace fdd
