@@ -17,8 +17,8 @@ public:
     Translator(Backend& backend, oxm::field_set pre_match, uint16_t prio_up, uint16_t prio_down)
     : m_backend(backend)
     , match(pre_match)
-    , prio_up(prio_up)
     , prio_down(prio_down)
+    , prio_up(prio_up)
     { }
 
     void operator()(const node& n);
@@ -26,10 +26,10 @@ public:
 private:
     Backend& m_backend;
     oxm::field_set match;
+    uint16_t prio_down = 1;
     uint16_t prio_up = 65535u;
     uint16_t prio_middle = 0;
     std::optional<oxm::mask<>> previous_mask = std::nullopt;
-    uint16_t prio_down = 1;
 };
 
 } // namespace fdd

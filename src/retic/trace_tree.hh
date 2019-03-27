@@ -11,8 +11,10 @@
 #include <boost/variant/recursive_wrapper_fwd.hpp>
 
 #include "oxm/field.hh"
+#include "oxm/field_set.hh"
 
 #include "tracer.hh"
+#include "backend.hh"
 #include "policies.hh"
 
 namespace runos {
@@ -59,6 +61,15 @@ public:
     struct inconsistent_trace: public std::exception { };
     Augmention(node* root)
         : current(root)
+        , m_backend(nullptr)
+    { }
+
+    Augmention(node* root, Backend& backend, oxm::field_set pre_match, uint16_t prio_down, uint16_t prio_up)
+        : current(root)
+        , m_backend(&backend)
+        , match(pre_match)
+        , prio_down(prio_down)
+        , prio_up(prio_up)
     { }
 
     void operator()(const tracer::load_node& ln);
@@ -67,6 +78,10 @@ public:
 
 private:
     node* current;
+    Backend* m_backend;
+    oxm::field_set match;
+    uint16_t prio_down;
+    uint16_t prio_up;
 };
 
 std::ostream& operator<<(std::ostream& out, const unexplored& u);

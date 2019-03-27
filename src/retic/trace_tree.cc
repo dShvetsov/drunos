@@ -1,5 +1,9 @@
 #include "trace_tree.hh"
 
+#include "fdd.hh"
+#include "fdd_compiler.hh"
+#include "fdd_translator.hh"
+
 namespace runos {
 namespace retic {
 namespace trace_tree {
@@ -19,18 +23,32 @@ void Augmention::operator()(const tracer::load_node& ln) {
     } else {
         throw inconsistent_trace();
     }
+    match.modify(ln.field);
 }
 
 void Augmention::operator()(const tracer::test_node& tn) {
+    uint16_t prio_middle = (prio_up + prio_down) / 2;
     if (boost::get<unexplored>(current)) {
         *current = test_node{tn.field, unexplored{}, unexplored{}};
         current = tn.result ? &boost::get<test_node>(current)->positive :
                               &boost::get<test_node>(current)->negative ;
+        if (m_backend) {
+            // install barrier rule
+            oxm::field_set barrier_match = match;
+            barrier_match.modify(tn.field);
+            m_backend->installBarrier(barrier_match, prio_middle);
+        }
     } else if (test_node* test = boost::get<test_node>(current); test != nullptr) {
         if (test->need != tn.field) {
             throw inconsistent_trace();
         }
         current = tn.result ? &test->positive : &test->negative;
+    }
+    if (tn.result) {
+        match.modify(tn.field);
+        prio_down = prio_middle + 1;
+    } else {
+        prio_up = prio_middle - 1;
     }
 }
 
@@ -41,6 +59,14 @@ void Augmention::finish(policy p) {
         leaf->p = p;
     } else {
         throw inconsistent_trace();
+    }
+
+    leaf_node* leaf = boost::get<leaf_node>(current);
+    leaf->kat_diagram = std::make_shared<fdd::diagram_holder>();
+    leaf->kat_diagram->value = fdd::compile(p);
+    if (m_backend) {
+        fdd::Translator translator{*m_backend, match, prio_down, prio_up};
+        boost::apply_visitor(translator, leaf->kat_diagram->value);
     }
 }
 
