@@ -338,7 +338,6 @@ TEST(TraverseTraceTree, Test) {
     trace_tree::Traverser traverser2(fs2);
     auto res2 = boost::apply_visitor(traverser2, root);
     EXPECT_EQ(dh_neg, res2);
-
 }
 
 // TODO Test throw exceoption from methods

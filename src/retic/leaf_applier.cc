@@ -3,7 +3,7 @@
 namespace runos {
 namespace retic {
 
-std::vector<tracer::Trace> getTraces(const fdd::leaf& l, Packet& orig_pkt) {
+std::vector<tracer::Trace> getTraces(const fdd::leaf& l, const Packet& orig_pkt) {
     std::vector<tracer::Trace> ret;
     ret.reserve(l.sets.size());
     for (auto& unit: l.sets) {
