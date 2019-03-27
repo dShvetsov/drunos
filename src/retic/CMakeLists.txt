@@ -19,6 +19,8 @@ set(SOURCES
     leaf_applier.hh
     trace_tree_translator.cc
     trace_tree_translator.hh
+    traverse_trace_tree.cc
+    traverse_trace_tree.hh
 )
 
 add_library(runos_retic STATIC ${SOURCES})

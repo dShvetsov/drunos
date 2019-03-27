@@ -52,7 +52,7 @@ void Augmention::operator()(const tracer::test_node& tn) {
     }
 }
 
-void Augmention::finish(policy p) {
+std::shared_ptr<fdd::diagram_holder> Augmention::finish(policy p) {
     if (boost::get<unexplored>(current)) {
         *current = leaf_node{p};
     } else if (leaf_node* leaf = boost::get<leaf_node>(current); leaf != nullptr) {
@@ -68,6 +68,7 @@ void Augmention::finish(policy p) {
         fdd::Translator translator{*m_backend, match, prio_down, prio_up};
         boost::apply_visitor(translator, leaf->kat_diagram->value);
     }
+    return leaf->kat_diagram;
 }
 
 std::ostream& operator<<(std::ostream& out, const unexplored& u) {

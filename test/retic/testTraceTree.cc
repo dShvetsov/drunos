@@ -8,7 +8,9 @@
 #include "retic/trace_tree_translator.hh"
 #include "retic/backend.hh"
 #include "retic/fdd.hh"
+#include "retic/fdd_compiler.hh"
 #include "retic/policies.hh"
+#include "retic/traverse_trace_tree.hh"
 #include "oxm/openflow_basic.hh"
 
 using namespace runos;
@@ -224,7 +226,7 @@ TEST(TraceTreeTest, FinishOnExisting) {
 TEST(OnLineTranslation, LeafAction) {
     MockBackend backend;
     trace_tree::node root = trace_tree::unexplored{};
-    trace_tree::Augmention augmenter(&root, backend, oxm::field_set{}, 10, 200);
+    trace_tree::Augmention augmenter(&root, &backend, oxm::field_set{}, 10, 200);
     EXPECT_CALL(backend, install(oxm::field_set{}, match{oxm::field_set{F<1>() == 1}}, _));
     augmenter.finish(modify(F<1>() << 1));
 }
@@ -233,7 +235,7 @@ TEST(OnLineTranslation, LoadMethod) {
     MockBackend backend;
     trace_tree::node root = trace_tree::unexplored{};
     tracer::trace_node n = tracer::load_node{F<1>() == 2};
-    trace_tree::Augmention augmenter(&root, backend, oxm::field_set{}, 10, 200);
+    trace_tree::Augmention augmenter(&root, &backend, oxm::field_set{}, 10, 200);
     boost::apply_visitor(augmenter, n);
     EXPECT_CALL(backend, install(oxm::field_set{F<1>() == 2}, match{oxm::field_set{F<1>() == 1}}, _));
     augmenter.finish(modify(F<1>() << 1));
@@ -244,7 +246,7 @@ TEST(OnLineTranslation, TestMethod) {
     uint16_t barrier_prio, positive_prio, negative_prio;
     trace_tree::node root = trace_tree::unexplored{};
     tracer::trace_node positive_n = tracer::test_node{F<1>() == 2, true};
-    trace_tree::Augmention augmenter(&root, backend, oxm::field_set{}, 10, 200);
+    trace_tree::Augmention augmenter(&root, &backend, oxm::field_set{}, 10, 200);
     EXPECT_CALL(backend, installBarrier(oxm::field_set{F<1>() == 2}, _))
         .WillOnce(SaveArg<1>(&barrier_prio));
 
@@ -259,12 +261,83 @@ TEST(OnLineTranslation, TestMethod) {
         .WillOnce(SaveArg<2>(&negative_prio));
 
     tracer::trace_node negative_n = tracer::test_node({F<1>() == 2, false});
-    trace_tree::Augmention negative_augmenter(&root, backend, oxm::field_set{}, 10, 200);
+    trace_tree::Augmention negative_augmenter(&root, &backend, oxm::field_set{}, 10, 200);
     boost::apply_visitor(negative_augmenter, negative_n);
     negative_augmenter.finish(modify(F<2>() << 2));
 
     EXPECT_LT(negative_prio, barrier_prio);
     EXPECT_LT(barrier_prio, positive_prio);
+}
+
+TEST(AugmentionFinalReturnValue, ReturnValue) {
+    trace_tree::node root = trace_tree::unexplored{};
+    trace_tree::Augmention augmenter(&root);
+    policy p = (filter(F<1>() == 1) >> modify(F<2>() == 2)) + (filter(F<3>() == 3) >> modify(F<3>() << 2));
+    auto result = augmenter.finish(p);
+    fdd::diagram true_value = fdd::compile(p);
+    EXPECT_EQ(true_value, result->value);
+
+}
+
+TEST(TraverseTraceTree, Unexplored) {
+    trace_tree::node root = trace_tree::unexplored{};
+    oxm::field_set fs;
+    trace_tree::Traverser traverser(fs);
+    auto res = boost::apply_visitor(traverser, root);
+    EXPECT_EQ(nullptr, res);
+
+}
+
+TEST(TraverseTraceTree, Load) {
+    oxm::field<> f = F<1>() == 1;
+    fdd::diagram d = fdd::leaf{};
+    auto dh = std::make_shared<fdd::diagram_holder>();
+    dh->value = d;
+    trace_tree::node root = trace_tree::load_node{
+        oxm::mask<>(f),
+        {
+            {f.value_bits(), trace_tree::leaf_node{stop(), dh}}
+        }
+    };
+    oxm::field_set fs1 = oxm::field_set{F<1>() == 1};
+    oxm::field_set fs2 = oxm::field_set{F<1>() == 2};
+
+    trace_tree::Traverser traverser1(fs1);
+    auto res1 = boost::apply_visitor(traverser1, root);
+    EXPECT_EQ(dh, res1);
+
+    trace_tree::Traverser traverser2(fs2);
+    auto res2 = boost::apply_visitor(traverser2, root);
+    EXPECT_EQ(nullptr, res2);
+
+}
+
+TEST(TraverseTraceTree, Test) {
+    oxm::field<> f = F<1>() == 1;
+
+    fdd::diagram d_pos = fdd::leaf{};
+    auto dh_pos = std::make_shared<fdd::diagram_holder>();
+    dh_pos->value = d_pos;
+
+    fdd::diagram d_neg = fdd::leaf{};
+    auto dh_neg = std::make_shared<fdd::diagram_holder>();
+    dh_neg->value = d_neg;
+
+    trace_tree::node root = trace_tree::test_node{
+        f,
+        trace_tree::leaf_node{stop(), dh_pos},
+        trace_tree::leaf_node{stop(), dh_neg}
+    };
+    oxm::field_set fs1 = oxm::field_set{F<1>() == 1};
+    oxm::field_set fs2 = oxm::field_set{F<1>() == 2};
+
+    trace_tree::Traverser traverser1(fs1);
+    auto res1 = boost::apply_visitor(traverser1, root);
+    EXPECT_EQ(dh_pos, res1);
+
+    trace_tree::Traverser traverser2(fs2);
+    auto res2 = boost::apply_visitor(traverser2, root);
+    EXPECT_EQ(dh_neg, res2);
 
 }
 
