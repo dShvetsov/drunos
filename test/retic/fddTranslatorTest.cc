@@ -3,6 +3,8 @@
 
 #include "retic/fdd.hh"
 #include "retic/fdd_translator.hh"
+#include "retic/trace_tree.hh"
+#include "retic/trace_tree_translator.hh"
 #include "retic/backend.hh"
 
 #include "oxm/field_set.hh"
@@ -139,3 +141,35 @@ TEST(FddTranslation, BarrierRule) {
     fdd::Translator translator{backend};
     boost::apply_visitor(translator, d);
 }
+
+TEST(FddTranslation, WithPreMatchAndPrios) {
+    MockBackend backend;
+    uint16_t prio;
+    fdd::Translator tranlator(backend, oxm::field_set{F<1>() == 1}, 120, 400);
+    fdd::diagram d = fdd::leaf{};
+    EXPECT_CALL(backend,
+        install(
+            oxm::field_set{F<1>() == 1},
+            std::vector<oxm::field_set>{},
+            _
+        )
+    ).WillOnce(SaveArg<2>(&prio));
+    boost::apply_visitor(tranlator, d);
+    EXPECT_LE(120, prio) << "Priority must be greater than setted low priority";
+    EXPECT_LE(prio, 400) << "Priority must be less than setted upper priority";
+}
+
+// TestTreeTranslation
+//
+TEST(TraceTreeTranslation, Unexplored) {
+    MockBackend backend;
+    trace_tree::node root = trace_tree::unexplored{};
+    EXPECT_CALL(backend, install(_, _, _)).Times(0);
+    EXPECT_CALL(backend, installBarrier(_, _)).Times(0);
+    trace_tree::Translator translator{backend};
+    boost::apply_visitor(translator, root);
+}
+
+
+// TODO: Test all methods of trace_tree::Translator
+

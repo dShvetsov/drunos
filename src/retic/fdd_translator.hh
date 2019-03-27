@@ -14,6 +14,13 @@ class Translator : boost::static_visitor<> {
 public:
     Translator(Backend& backend) : m_backend(backend) { }
 
+    Translator(Backend& backend, oxm::field_set pre_match, uint16_t prio_up, uint16_t prio_down)
+    : m_backend(backend)
+    , match(pre_match)
+    , prio_up(prio_up)
+    , prio_down(prio_down)
+    { }
+
     void operator()(const node& n);
     void operator()(const leaf& l);
 private:

@@ -5,6 +5,8 @@
 
 #include "retic/tracer.hh"
 #include "retic/trace_tree.hh"
+#include "retic/trace_tree_translator.hh"
+#include "retic/backend.hh"
 #include "retic/fdd.hh"
 #include "retic/policies.hh"
 #include "oxm/openflow_basic.hh"
