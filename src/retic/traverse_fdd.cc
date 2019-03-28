@@ -25,7 +25,9 @@ leaf& Traverser::operator()(leaf& l) {
             // should create it
             auto traces = retic::getTraces(l, m_pkt);
             auto merged_trace = tracer::mergeTrace(traces, m_match);
-            trace_tree::Augmention augmenter( &(l.maple_tree), m_backend, m_match, 1, 1000);
+            trace_tree::Augmention augmenter( 
+                &(l.maple_tree), m_backend, m_match, l.prio_down, l.prio_up
+            );
             for (auto& n: merged_trace.values()) {
                 boost::apply_visitor(augmenter, n);
             }

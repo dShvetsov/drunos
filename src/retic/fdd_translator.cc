@@ -59,8 +59,10 @@ void Translator::operator()(const node& n) {
 }
 
 void Translator::operator()(const leaf& l) {
-    uint16_t prio = previous_mask.has_value() ? prio_middle : prio_up;
-    prio = prio_up / 2 + prio / 2;
+    uint16_t local_prio_up = previous_mask.has_value() ? prio_middle : prio_up;
+    uint16_t prio = prio_down / 2 + local_prio_up / 2;
+    l.prio_up = local_prio_up;
+    l.prio_down = prio_down;
     std::vector<oxm::field_set> sets;
     sets.reserve(l.sets.size());
     for (auto& s: l.sets) {
