@@ -159,7 +159,7 @@ static action_unit seq_actions(const action_unit& one, const action_unit& two) {
 }
 
 diagram sequential_composition::left_action_applier::operator()(const leaf& l) const {
-    leaf result{};
+    leaf result{{}, l.flow_settings};
     result.sets.reserve(l.sets.size());
     for (auto& a : l.sets) {
         action_unit au = seq_actions(action, a);

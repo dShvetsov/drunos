@@ -36,6 +36,8 @@ struct FlowSettings {
         FlowSettings ret;
         ret.idle_timeout = std::min(lhs.idle_timeout, rhs.idle_timeout);
         ret.hard_timeout = std::min(lhs.hard_timeout, rhs.hard_timeout);
+
+        // hard timeout cann't be less than idle timeout
         ret.idle_timeout = std::min(ret.idle_timeout, ret.hard_timeout);
         return ret;
     }
@@ -108,12 +110,12 @@ policy handler(std::function<policy(Packet&)> function)
 
 inline
 policy idle_timeout(duration time) {
-    return FlowSettings{time, time};
+    return FlowSettings{.idle_timeout = time};
 }
 
 inline
 policy hard_timeout(duration time) {
-    return FlowSettings{.hard_timeout = time};
+    return FlowSettings{time, time};
 }
 
 inline
@@ -200,8 +202,8 @@ inline std::ostream& operator<<(std::ostream& out, const PacketFunction& func) {
 
 inline std::ostream& operator<<(std::ostream& out, const FlowSettings& flow) {
     return out 
-        << "{ idle_timeout = " << std::chrono::seconds(flow.idle_timeout).count() << ".s "
-        << "hard_timeout = " << std::chrono::seconds(flow.hard_timeout).count() << ".s }";
+        << "{ idle_timeout = " << std::chrono::seconds(flow.idle_timeout).count() << " sec. "
+        << "hard_timeout = " << std::chrono::seconds(flow.hard_timeout).count() << " sec. }";
 }
 
 } // namespace retic

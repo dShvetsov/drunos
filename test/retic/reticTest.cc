@@ -317,10 +317,13 @@ TEST(FlowSettingsTest, TestPlus) {
     FlowSettings settings1{.idle_timeout = seconds(20)},
                  settings2{.idle_timeout = seconds(10)},
                  settings3{.hard_timeout = seconds(15)};
+
     auto result1 = settings1 & settings2;
     auto result2 = settings1 & settings3;
     auto result3 = settings2 & settings3;
+
     EXPECT_EQ(result1.idle_timeout, duration(seconds(10)));
+    EXPECT_EQ(result1.hard_timeout, duration::max());
 
     EXPECT_EQ(result2.idle_timeout, duration(seconds(15)));
     EXPECT_EQ(result2.hard_timeout, duration(seconds(15)));

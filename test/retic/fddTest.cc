@@ -681,37 +681,37 @@ TEST(FddCompilerTest, FlowSettings) {
 }
 
 TEST(FddCompilerTest, FlowSettingsSeq) {
-    policy p = hard_timeout(sec(10)) >> hard_timeout(sec(5));
+    policy p = idle_timeout(sec(10)) >> idle_timeout(sec(5));
     fdd::diagram d = fdd::compile(p);
-    fdd::diagram true_value = fdd::leaf{{oxm::field_set{}}, FlowSettings{.hard_timeout = sec(5)}};
+    fdd::diagram true_value = fdd::leaf{{oxm::field_set{}}, FlowSettings{.idle_timeout = sec(5)}};
     EXPECT_EQ(true_value, d);
 }
 
 TEST(FddCompilerTest, FlowSettingsSeq2) {
-    policy p = hard_timeout(sec(5)) >> hard_timeout(sec(10));
+    policy p = idle_timeout(sec(5)) >> idle_timeout(sec(10));
     fdd::diagram d = fdd::compile(p);
-    fdd::diagram true_value = fdd::leaf{{oxm::field_set{}}, FlowSettings{.hard_timeout = sec(5)}};
+    fdd::diagram true_value = fdd::leaf{{oxm::field_set{}}, FlowSettings{.idle_timeout = sec(5)}};
     EXPECT_EQ(true_value, d);
 }
 
 TEST(FddCompilerTest, FlowSettingsParallel) {
-    policy p = hard_timeout(sec(10)) + hard_timeout(sec(5));
+    policy p = idle_timeout(sec(10)) + idle_timeout(sec(5));
     fdd::diagram d = fdd::compile(p);
-    fdd::diagram true_value = fdd::leaf{{oxm::field_set{}}, FlowSettings{.hard_timeout = sec(5)}};
+    fdd::diagram true_value = fdd::leaf{{oxm::field_set{}}, FlowSettings{.idle_timeout = sec(5)}};
     EXPECT_EQ(true_value, d);
 }
 
 
 TEST(FddCompilerTest, FlowSettingsWithTwoActions) {
-    policy p = (modify(F<1>() == 1) >> hard_timeout(sec(20))) + 
-               (modify(F<2>() == 2) >> hard_timeout(sec(30)));
+    policy p = (modify(F<1>() == 1) >> idle_timeout(sec(20))) + 
+               (modify(F<2>() == 2) >> idle_timeout(sec(30)));
     fdd::diagram d = fdd::compile(p);
     fdd::diagram true_value = fdd::leaf {
         {
             oxm::field_set{F<1>() == 1},
             oxm::field_set{F<2>() == 2}
         },
-        FlowSettings{.hard_timeout = sec(20)}
+        FlowSettings{.idle_timeout = sec(20)}
     };
     EXPECT_EQ(true_value, d);
 }
