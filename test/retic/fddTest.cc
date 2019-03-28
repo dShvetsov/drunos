@@ -679,3 +679,95 @@ TEST(FddTraverseTest, FddTraverse) {
     EXPECT_EQ(l2, fdd::leaf{{ oxm::field_set{F<3>() == 3}}});
 }
 
+TEST(FddTraverseTest, FddTraverseWithMaple) {
+    policy p = handler([](Packet& pkt) {
+        // Test with nested function
+        return handler([](Packet& pkt) {
+            return modify(F<2>() << 2);
+        });
+    });
+    auto pf = boost::get<PacketFunction>(p);
+    fdd::diagram d = fdd::node {
+        F<1>() == 1,
+        fdd::leaf{{ {oxm::field_set{}, pf} }},
+        fdd::leaf{}
+    };
+    oxm::field_set fs{F<1>() == 1};
+    fdd::Traverser traverser{fs};
+    fdd::leaf& l = boost::apply_visitor(traverser, d);
+    EXPECT_EQ(l, fdd::leaf{{ oxm::field_set{F<2>() == 2} }});
+}
+
+struct MockBackend: public Backend {
+    MOCK_METHOD3(install, void(oxm::field_set, std::vector<oxm::field_set>, uint16_t));
+    MOCK_METHOD2(installBarrier, void(oxm::field_set, uint16_t));
+};
+
+using match = std::vector<oxm::field_set>;
+
+TEST(FddTraverseTest, FddTraverseWithMapleWithBackend) {
+    MockBackend backend;
+
+    policy p = handler([](Packet& pkt) {
+        pkt.test(F<1>() == 1); // should't be called becouse of cache
+        pkt.test(F<3>() == 3); // should be called
+        return modify(F<2>() << 2);
+    });
+    auto pf = boost::get<PacketFunction>(p);
+    fdd::diagram d = fdd::node {
+        F<1>() == 1,
+        fdd::leaf{{ {oxm::field_set{}, pf} }},
+        fdd::leaf{}
+    };
+    oxm::field_set fs{F<1>() == 1, F<2>() == 2, F<3>() == 3};
+    fdd::Traverser traverser{fs, &backend};
+    EXPECT_CALL(backend, installBarrier(oxm::field_set{F<1>() == 1, F<3>() == 3}, _)).Times(1);
+    EXPECT_CALL(backend, installBarrier(oxm::field_set{F<1>() == 1}, _)).Times(0);
+
+    EXPECT_CALL(
+        backend,
+        install(
+            oxm::field_set{F<1>() == 1, F<3>() == 3},
+            match{oxm::field_set{F<2>() == 2}},
+            _
+        )
+    ).Times(1);
+
+    fdd::leaf& l = boost::apply_visitor(traverser, d);
+    EXPECT_EQ(l, fdd::leaf{{ oxm::field_set{F<2>() == 2} }});
+}
+
+TEST(FddTraverseTest, FddTraverseWithMapleWithBackendNestedFunction) {
+    MockBackend backend;
+
+    policy p = handler([](Packet& pkt) {
+        // Test with nested function
+        pkt.test(F<1>() == 1); // should't be called becouse of cache
+        pkt.test(F<3>() == 3); // should be called
+        return handler([](Packet& pkt) {
+            return modify(F<2>() << 2);
+        });
+    });
+    auto pf = boost::get<PacketFunction>(p);
+    fdd::diagram d = fdd::node {
+        F<1>() == 1,
+        fdd::leaf{{ {oxm::field_set{}, pf} }},
+        fdd::leaf{}
+    };
+    oxm::field_set fs{F<1>() == 1, F<2>() == 2, F<3>() == 3};
+    fdd::Traverser traverser{fs, &backend};
+    EXPECT_CALL(backend, installBarrier(oxm::field_set{F<1>() == 1, F<3>() == 3}, _)).Times(Between(1,2));
+    EXPECT_CALL(backend, installBarrier(oxm::field_set{F<1>() == 1}, _)).Times(0);
+
+    EXPECT_CALL(
+        backend,
+        install(
+            oxm::field_set{F<1>() == 1, F<3>() == 3},
+            match{oxm::field_set{F<2>() == 2}},
+            _
+        )
+    ).Times(1);
+
+    fdd::leaf& l = boost::apply_visitor(traverser, d);
+    EXPECT_EQ(l, fdd::leaf{{ oxm::field_set{F<2>() == 2} }});
+}

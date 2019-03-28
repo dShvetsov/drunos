@@ -23,7 +23,7 @@ void Augmention::operator()(const tracer::load_node& ln) {
     } else {
         throw inconsistent_trace();
     }
-    match.modify(ln.field);
+    m_match.modify(ln.field);
 }
 
 void Augmention::operator()(const tracer::test_node& tn) {
@@ -34,9 +34,9 @@ void Augmention::operator()(const tracer::test_node& tn) {
                               &boost::get<test_node>(current)->negative ;
         if (m_backend) {
             // install barrier rule
-            oxm::field_set barrier_match = match;
-            barrier_match.modify(tn.field);
-            m_backend->installBarrier(barrier_match, prio_middle);
+            oxm::field_set barrier_m_match = m_match;
+            barrier_m_match.modify(tn.field);
+            m_backend->installBarrier(barrier_m_match, prio_middle);
         }
     } else if (test_node* test = boost::get<test_node>(current); test != nullptr) {
         if (test->need != tn.field) {
@@ -45,7 +45,7 @@ void Augmention::operator()(const tracer::test_node& tn) {
         current = tn.result ? &test->positive : &test->negative;
     }
     if (tn.result) {
-        match.modify(tn.field);
+        m_match.modify(tn.field);
         prio_down = prio_middle + 1;
     } else {
         prio_up = prio_middle - 1;
@@ -65,7 +65,7 @@ std::shared_ptr<fdd::diagram_holder> Augmention::finish(policy p) {
     leaf->kat_diagram = std::make_shared<fdd::diagram_holder>();
     leaf->kat_diagram->value = fdd::compile(p);
     if (m_backend) {
-        fdd::Translator translator{*m_backend, match, prio_down, prio_up};
+        fdd::Translator translator{*m_backend, m_match, prio_down, prio_up};
         boost::apply_visitor(translator, leaf->kat_diagram->value);
     }
     return leaf->kat_diagram;

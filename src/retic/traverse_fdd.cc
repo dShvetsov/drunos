@@ -23,14 +23,18 @@ leaf& Traverser::operator()(leaf& l) {
         if (next_fdd == nullptr) {
             // has no value for this packet
             // should create it
-            // TODO: use pre_match for mergeTraces and so on
             auto traces = retic::getTraces(l, m_pkt);
-            auto merged_trace = tracer::mergeTrace(traces);
-            trace_tree::Augmention augmenter( &(l.maple_tree) );
+            auto merged_trace = tracer::mergeTrace(traces, m_match);
+            trace_tree::Augmention augmenter( &(l.maple_tree), m_backend, m_match, 1, 1000);
             for (auto& n: merged_trace.values()) {
                 boost::apply_visitor(augmenter, n);
             }
             next_fdd = augmenter.finish(merged_trace.result());
+            m_match = augmenter.match();
+        }
+
+        for (auto& f: maple_match) {
+            m_match.modify(f);
         }
 
         return boost::apply_visitor(*this, next_fdd->value);
@@ -42,8 +46,12 @@ leaf& Traverser::operator()(leaf& l) {
 }
 
 leaf& Traverser::operator()(node& n) {
-    return m_pkt.test(n.field) ? boost::apply_visitor(*this, n.positive)
-                               : boost::apply_visitor(*this, n.negative);
+    if (m_pkt.test(n.field)) {
+        m_match.modify(n.field);
+        return boost::apply_visitor(*this, n.positive);
+    } else {
+       return boost::apply_visitor(*this, n.negative);
+    }
 }
 
 } // fdd

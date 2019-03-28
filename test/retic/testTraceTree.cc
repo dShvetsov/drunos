@@ -11,6 +11,7 @@
 #include "retic/fdd_compiler.hh"
 #include "retic/policies.hh"
 #include "retic/traverse_trace_tree.hh"
+#include "retic/leaf_applier.hh"
 #include "oxm/openflow_basic.hh"
 
 using namespace runos;
@@ -248,6 +249,7 @@ TEST(OnLineTranslation, TestMethod) {
     tracer::trace_node positive_n = tracer::test_node{F<1>() == 2, true};
     trace_tree::Augmention augmenter(&root, &backend, oxm::field_set{}, 10, 200);
     EXPECT_CALL(backend, installBarrier(oxm::field_set{F<1>() == 2}, _))
+        .Times(1)
         .WillOnce(SaveArg<1>(&barrier_prio));
 
     boost::apply_visitor(augmenter, positive_n);
@@ -341,6 +343,86 @@ TEST(TraverseTraceTree, Test) {
     EXPECT_EQ(dh_neg, res2);
     EXPECT_EQ(match2, oxm::field_set{});
 }
+
+TEST(TraceTreeComplex, GetTracesMergeAndAugment) {
+    MockBackend backend;
+    trace_tree::node root = trace_tree::unexplored{};
+    policy p = handler([](Packet& pkt) {
+        // Test with nested function
+        pkt.test(F<1>() == 1); // should't be called becouse of cache
+        pkt.test(F<3>() == 3); // should be called
+        return modify(F<2>() << 2);
+    });
+    auto pf = boost::get<PacketFunction>(p);
+    fdd::leaf l = fdd::leaf{{ {oxm::field_set{}, pf} }};
+    oxm::field_set fs{F<1>() == 1, F<2>() == 2, F<3>() == 3};
+
+    EXPECT_CALL(backend, installBarrier(oxm::field_set{F<1>() == 1, F<3>() == 3}, _)).Times(1);
+    EXPECT_CALL(backend, installBarrier(oxm::field_set{F<1>() == 1}, _)).Times(0);
+
+    EXPECT_CALL(
+        backend,
+        install(
+            oxm::field_set{F<1>() == 1, F<3>() == 3},
+            match{oxm::field_set{F<2>() == 2}},
+            _
+        )
+    ).Times(1);
+
+    auto traces = retic::getTraces(l, fs);
+    auto merged_trace = tracer::mergeTrace(traces, oxm::field_set{F<1>() == 1});
+    trace_tree::Augmention augmenter( &root, &backend, oxm::field_set{F<1>() == 1}, 1, 1000);
+    for (auto& n: merged_trace.values()) {
+        boost::apply_visitor(augmenter, n);
+    }
+    augmenter.finish(merged_trace.result());
+}
+
+TEST(TraceTreeComplex, GetTracesMergeAndAugmentNestedFunction) {
+    MockBackend backend;
+    trace_tree::node root = trace_tree::unexplored{};
+    policy nested_handler = handler([](Packet& pkt) {
+            return modify(F<2>() << 2);
+    });
+    fdd::diagram true_next_fdd = fdd::compile(nested_handler);
+
+    policy p = handler([nested_handler](Packet& pkt) {
+        // Test with nested function
+        pkt.test(F<1>() == 1); // should't be called becouse of cache
+        pkt.test(F<3>() == 3); // should be called
+        return nested_handler;
+    });
+    auto pf = boost::get<PacketFunction>(p);
+    fdd::leaf l = fdd::leaf{{ {oxm::field_set{}, pf} }};
+    oxm::field_set fs{F<1>() == 1, F<2>() == 2, F<3>() == 3};
+
+    EXPECT_CALL(backend, installBarrier(oxm::field_set{F<1>() == 1, F<3>() == 3}, _)).Times(Between(1, 2));
+    EXPECT_CALL(backend, installBarrier(oxm::field_set{F<1>() == 1}, _)).Times(0);
+
+    EXPECT_CALL(
+        backend,
+        install(
+            oxm::field_set{F<1>() == 1, F<3>() == 3},
+            match{oxm::field_set{F<2>() == 2}},
+            _
+        )
+    ).Times(0);
+
+    auto traces = retic::getTraces(l, fs);
+    auto merged_trace = tracer::mergeTrace(traces, oxm::field_set{F<1>() == 1});
+    trace_tree::Augmention augmenter( &root, &backend, oxm::field_set{F<1>() == 1}, 1, 1000);
+    for (auto& n: merged_trace.values()) {
+        boost::apply_visitor(augmenter, n);
+    }
+    auto next_fdd = augmenter.finish(merged_trace.result());
+    oxm::field_set compiled_match = augmenter.match();
+    EXPECT_EQ(next_fdd->value, true_next_fdd);
+    oxm::field_set true_compiler_match = oxm::field_set{ F<1>() == 1, F<3>() == 3};
+    EXPECT_EQ(compiled_match, true_compiler_match);
+}
+
+// TODO Test throw exceoption from methods
+
 
 // TODO Test throw exceoption from methods
 

@@ -67,7 +67,7 @@ public:
     Augmention(node* root, Backend* backend, oxm::field_set pre_match, uint16_t prio_down, uint16_t prio_up)
         : current(root)
         , m_backend(backend)
-        , match(pre_match)
+        , m_match(pre_match)
         , prio_down(prio_down)
         , prio_up(prio_up)
     { }
@@ -75,11 +75,12 @@ public:
     void operator()(const tracer::load_node& ln);
     void operator()(const tracer::test_node& tn);
     std::shared_ptr<fdd::diagram_holder> finish(policy pol);
+    oxm::field_set match() const { return m_match; }
 
 private:
     node* current;
     Backend* m_backend;
-    oxm::field_set match;
+    oxm::field_set m_match;
     uint16_t prio_down;
     uint16_t prio_up;
 };

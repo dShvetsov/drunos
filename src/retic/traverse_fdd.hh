@@ -19,6 +19,7 @@ public:
     leaf& operator()(node& n);
 private:
     const Packet& m_pkt;
+    oxm::field_set m_match;
     Backend* m_backend;
 
 };
