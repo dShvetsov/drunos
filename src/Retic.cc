@@ -28,16 +28,8 @@ void Retic::init(Loader* loader, const Config& root_config)
         uint8_t buffer[1500];
         PacketParser pp{pi, conn->dpid()};
 
-        retic::fdd::Traverser traverser{pp};
+        retic::fdd::Traverser traverser(pp, m_backend.get());
         auto& leaf = boost::apply_visitor(traverser, m_fdd);
-        auto traces = retic::getTraces(leaf, pp);
-        retic::tracer::Trace merged_trace = retic::tracer::mergeTrace(traces);
-        retic::trace_tree::Augmention augmenter( &(leaf.maple_tree) );
-        for (auto& node: merged_trace.values()) {
-            boost::apply_visitor(augmenter, node);
-        }
-        augmenter.finish(merged_trace.result());
-
 
         retic::Applier runtime{pp};
         boost::apply_visitor(runtime, m_policies[m_main_policy]);
