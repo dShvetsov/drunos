@@ -85,6 +85,7 @@ void Retic::clearRules() {
 
 void Retic::reinstallRules() {
     m_backend = std::make_unique<Of13Backend>(m_drivers, m_table);
+    m_fdd = retic::fdd::compile(m_policies.at(m_main_policy));
     retic::fdd::Translator translator(*m_backend);
     boost::apply_visitor(translator, m_fdd);
 }

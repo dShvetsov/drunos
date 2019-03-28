@@ -94,6 +94,7 @@ public:
             fm.out_group(of13::OFPG_ANY);
             m_conn->send(fm);
         }
+        DVLOG(50) << "Remove flow 0x" << std::hex << m_cookie;
     }
 private:
     SwitchConnectionPtr m_conn;
@@ -145,6 +146,7 @@ public:
             gm.group_id(m_id);
             m_conn->send(gm);
         }
+        DVLOG(50) << "Remove group " << m_id;
 
     }
 
