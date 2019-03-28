@@ -162,6 +162,16 @@ TEST(FddTranslation, WithPreMatchAndPrios) {
     EXPECT_LE(prio, 400) << "Priority must be less than setted upper priority";
 }
 
+using secs = std::chrono::seconds;
+
+TEST(FddTraverse, FlowSettings) {
+    MockBackend backend;
+    fdd::diagram d = fdd::leaf{{}, FlowSettings{secs(30), secs(40)}};
+    fdd::Translator translator(backend);
+    EXPECT_CALL(backend, install(_, _, _, FlowSettings{secs(30), secs(40)}));
+    boost::apply_visitor(translator, d);
+}
+
 // TestTreeTranslation
 //
 TEST(TraceTreeTranslation, Unexplored) {
