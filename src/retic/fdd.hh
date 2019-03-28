@@ -82,6 +82,7 @@ struct action_unit {
 
 struct leaf {
     std::vector<action_unit> sets;
+    FlowSettings flow_settings;
     trace_tree::node maple_tree;
     mutable uint16_t prio_down, prio_up; // TODO: unhack me
 };

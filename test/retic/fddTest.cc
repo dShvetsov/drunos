@@ -13,6 +13,8 @@ using namespace runos;
 using namespace retic;
 using namespace ::testing;
 
+using sec = std::chrono::seconds;
+
 TEST(TypeComprassion, Types) {
     const auto ofb_switch_id = oxm::switch_id();
     const auto ofb_eth_src = oxm::eth_src();
@@ -41,6 +43,16 @@ TEST(EqualFdd, EqualTest) {
     EXPECT_NE(node1, node5);
     EXPECT_NE(node1, node5);
     EXPECT_EQ(node7, node8);
+}
+
+TEST(EqualFdd, EqualWithFlowSettings) {
+    fdd::diagram d1 = fdd::leaf{{oxm::field_set{}}, FlowSettings{sec(10), sec(20)}};
+    fdd::diagram d2 = fdd::leaf{{oxm::field_set{}}, FlowSettings{sec(10), sec(20)}};
+    fdd::diagram d3 = fdd::leaf{{oxm::field_set{}}, FlowSettings{sec(1234), sec(20)}};
+    fdd::diagram d4 = fdd::leaf{{oxm::field_set{}}, FlowSettings{sec(10), sec(1234)}};
+    EXPECT_EQ(d1, d2);
+    EXPECT_NE(d1, d3);
+    EXPECT_NE(d1, d4);
 }
 
 
@@ -658,6 +670,50 @@ TEST(FddCompilerTest, SeqAction2If) {
     fdd::diagram result = boost::apply_visitor(fdd::sequential_composition{}, d1, d2);
     fdd::diagram true_value = fdd::leaf{{ {oxm::field_set{F<1>() == 1, F<2>() == 2}, pf2}}};
     ASSERT_EQ(true_value, result);
+}
+
+TEST(FddCompilerTest, FlowSettings) {
+    policy p = idle_timeout(sec(10));
+    auto settings = boost::get<FlowSettings>(p);
+    fdd::diagram d = fdd::compile(p);
+    fdd::diagram true_value = fdd::leaf{{oxm::field_set{}}, settings};
+    EXPECT_EQ(true_value, d);
+}
+
+TEST(FddCompilerTest, FlowSettingsSeq) {
+    policy p = hard_timeout(sec(10)) >> hard_timeout(sec(5));
+    fdd::diagram d = fdd::compile(p);
+    fdd::diagram true_value = fdd::leaf{{oxm::field_set{}}, FlowSettings{.hard_timeout = sec(5)}};
+    EXPECT_EQ(true_value, d);
+}
+
+TEST(FddCompilerTest, FlowSettingsSeq2) {
+    policy p = hard_timeout(sec(5)) >> hard_timeout(sec(10));
+    fdd::diagram d = fdd::compile(p);
+    fdd::diagram true_value = fdd::leaf{{oxm::field_set{}}, FlowSettings{.hard_timeout = sec(5)}};
+    EXPECT_EQ(true_value, d);
+}
+
+TEST(FddCompilerTest, FlowSettingsParallel) {
+    policy p = hard_timeout(sec(10)) + hard_timeout(sec(5));
+    fdd::diagram d = fdd::compile(p);
+    fdd::diagram true_value = fdd::leaf{{oxm::field_set{}}, FlowSettings{.hard_timeout = sec(5)}};
+    EXPECT_EQ(true_value, d);
+}
+
+
+TEST(FddCompilerTest, FlowSettingsWithTwoActions) {
+    policy p = (modify(F<1>() == 1) >> hard_timeout(sec(20))) + 
+               (modify(F<2>() == 2) >> hard_timeout(sec(30)));
+    fdd::diagram d = fdd::compile(p);
+    fdd::diagram true_value = fdd::leaf {
+        {
+            oxm::field_set{F<1>() == 1},
+            oxm::field_set{F<2>() == 2}
+        },
+        FlowSettings{.hard_timeout = sec(20)}
+    };
+    EXPECT_EQ(true_value, d);
 }
 
 TEST(FddTraverseTest, FddTraverse) {

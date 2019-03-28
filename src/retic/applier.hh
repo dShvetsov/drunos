@@ -86,6 +86,10 @@ class Applier : public boost::static_visitor<> {
         }
     }
 
+    void operator()(const FlowSettings&) {
+        // no flow created. Do nothing
+    }
+
     const PacketsWithMeta& results() const
     { return m_pkts; }
 

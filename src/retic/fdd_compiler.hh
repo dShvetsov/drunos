@@ -30,6 +30,7 @@ public:
     diagram operator()(const Sequential&) const;
     diagram operator()(const Parallel&) const;
     diagram operator()(const PacketFunction&) const;
+    diagram operator()(const FlowSettings&) const;
 };
 
 bool operator==(const leaf& lhs, const leaf& rhs);

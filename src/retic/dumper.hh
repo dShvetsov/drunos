@@ -47,6 +47,10 @@ class Dumper : public boost::static_visitor<> {
     void operator()(const Id& id) {
         m_os << " id ";
     }
+
+    void operator()(const FlowSettings& flow) {
+        m_os << flow;
+    }
 private:
     std::ostream& m_os;
 };

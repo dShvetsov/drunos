@@ -49,6 +49,10 @@ diagram Compiler::operator()(const PacketFunction& f) const {
     return leaf{ {{oxm::field_set{}, f}} };
 }
 
+diagram Compiler::operator()(const FlowSettings& flow) const {
+    return leaf{{oxm::field_set{}}, flow};
+}
+
 
 // ================= Compositions operators ============================
 
@@ -58,6 +62,7 @@ diagram parallel_composition::operator()(const leaf& lhs, const leaf& rhs) const
     ret.sets.reserve(lhs.sets.size() + rhs.sets.size());
     ret.sets.insert(ret.sets.end(), lhs.sets.begin(), lhs.sets.end());
     ret.sets.insert(ret.sets.end(), rhs.sets.begin(), rhs.sets.end());
+    ret.flow_settings = lhs.flow_settings & rhs.flow_settings;
     return ret;
 }
 
@@ -115,7 +120,7 @@ diagram sequential_composition::operator()(const leaf& lhs, const diagram& rhs) 
         return leaf{};
     }
 
-    diagram result = leaf{};
+    diagram result = leaf{{}, lhs.flow_settings};
     parallel_composition parallel;
     for (auto& action: lhs.sets) {
         left_action_applier applier{action};
@@ -260,7 +265,8 @@ bool operator==(const leaf& lhs, const leaf& rhs) {
             return false;
         }
     }
-    return true;
+    // So only settings may differ
+    return lhs.flow_settings == rhs.flow_settings;
 }
 
 std::ostream& operator<<(std::ostream& out, const node& rhs) {
@@ -273,7 +279,7 @@ std::ostream& operator<<(std::ostream& out, const leaf& rhs) {
     for (auto& i: rhs.sets) {
         out << "(" << i.pred_actions << ") ";
     }
-    out << "]";
+    out << " settings= " << rhs.flow_settings << "]";
     return out;
 }
 
