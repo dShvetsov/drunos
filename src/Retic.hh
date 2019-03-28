@@ -67,7 +67,13 @@ public:
     // TODO: TestMe
     void packetOuts (uint8_t* data, size_t data_len, std::vector<oxm::field_set> actions, uint64_t dpid) override;
 private:
-    void install_on(uint64_t dpid, oxm::field_set match, std::vector<oxm::field_set> actions, uint16_t prio);
+    void install_on(
+        uint64_t dpid,
+        oxm::field_set match,
+        std::vector<oxm::field_set> actions,
+        uint16_t prio,
+        retic::FlowSettings flow_settings
+    );
     std::unordered_map<uint64_t, OFDriverPtr> m_drivers;
     using OfObject = std::variant<GroupPtr, RulePtr>;
     std::vector<OfObject> m_storage;

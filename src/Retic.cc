@@ -1,5 +1,7 @@
 #include "Retic.hh"
 
+#include <chrono>
+
 #include "Controller.hh"
 #include "Common.hh"
 #include "oxm/openflow_basic.hh"
@@ -16,6 +18,8 @@
 REGISTER_APPLICATION(Retic, {"controller", ""})
 
 using namespace runos;
+
+using secs = std::chrono::seconds;
 
 void Retic::init(Loader* loader, const Config& root_config)
 {
@@ -106,16 +110,19 @@ void Of13Backend::install(
     uint16_t prio,
     retic::FlowSettings flow_settings
 ) {
+    if (flow_settings.hard_timeout == retic::duration::zero()) {
+        // there is no need to install its flow, becouse timeouts is zero
+    }
     static const auto ofb_switch_id = oxm::switch_id();
     auto switch_id_it = match.find(oxm::type(ofb_switch_id));
     if (switch_id_it != match.end()) {
         Packet& pkt_iface(match);
         uint64_t dpid = pkt_iface.load(ofb_switch_id);
         match.erase(oxm::mask<>(ofb_switch_id));
-        install_on(dpid, match, actions, prio);
+        install_on(dpid, match, actions, prio, flow_settings);
     } else {
         for (auto [dpid, driver]: m_drivers) {
-            install_on(dpid, match, actions, prio);
+            install_on(dpid, match, actions, prio, flow_settings);
         }
     }
 }
@@ -165,7 +172,14 @@ void Of13Backend::packetOuts(uint8_t* data, size_t data_len, std::vector<oxm::fi
     }
 }
 
-void Of13Backend::install_on(uint64_t dpid, oxm::field_set match, std::vector<oxm::field_set> actions, uint16_t prio) {
+void Of13Backend::install_on(
+    uint64_t dpid,
+    oxm::field_set match,
+    std::vector<oxm::field_set> actions,
+    uint16_t prio,
+    retic::FlowSettings settings
+) {
+    using namespace retic;
     static const auto ofb_out_port = oxm::out_port();
     auto driver_it = m_drivers.find(dpid);
     if (driver_it == m_drivers.end()) {
@@ -184,6 +198,10 @@ void Of13Backend::install_on(uint64_t dpid, oxm::field_set match, std::vector<ox
     buckets.reserve(actions.size());
     for (auto& action: actions) {
         Actions driver_acts{};
+        driver_acts.idle_timeout =
+            settings.idle_timeout == duration::max() ? 0 : secs(settings.idle_timeout).count();
+        driver_acts.hard_timeout =
+            settings.hard_timeout == duration::max() ? 0 : secs(settings.hard_timeout).count();
         auto out_port_it = action.find(oxm::type(ofb_out_port));
         if (out_port_it != action.end()) {
             Packet& pkt_iface(action);

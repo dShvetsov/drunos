@@ -16,6 +16,10 @@ namespace ports {
 struct Actions {
     uint32_t out_port = 0;
     uint32_t group_id = 0;
+    uint32_t idle_timeout = 0; // timeouts in seconds
+    uint32_t hard_timeout = 0; // zero means infinity timeouts
+                               // TODO: Not here
+                               // TODO: what is need to do, when flow deleted by timeout
     oxm::field_set set_fields;
     friend bool operator==(const Actions& lhs, const Actions& rhs) {
         return lhs.out_port == rhs.out_port && lhs.group_id == rhs.group_id && lhs.set_fields == rhs.set_fields;

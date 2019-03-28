@@ -76,6 +76,10 @@ public:
             fm.table_id(m_table);
             fm.cookie(m_cookie);
             fm.match(make_of_match(m_match));
+
+            fm.idle_timeout(m_acts.idle_timeout);
+            fm.hard_timeout(m_acts.hard_timeout);
+
             fm.flags( of13::OFPFF_CHECK_OVERLAP |
                       of13::OFPFF_SEND_FLOW_REM );
             of13::ApplyActions apply_actions = convert_to_apply_action(m_acts);
