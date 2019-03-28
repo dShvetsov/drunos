@@ -776,7 +776,7 @@ TEST(FddTraverseTest, FddTraverseWithMapleWithBackend) {
         install(
             oxm::field_set{F<1>() == 1, F<3>() == 3},
             match{oxm::field_set{F<2>() == 2}},
-            _
+            _, _
         )
     ).Times(1);
 
@@ -811,7 +811,7 @@ TEST(FddTraverseTest, FddTraverseWithMapleWithBackendNestedFunction) {
         install(
             oxm::field_set{F<1>() == 1, F<3>() == 3},
             match{oxm::field_set{F<2>() == 2}},
-            _
+            _, _
         )
     ).Times(1);
 

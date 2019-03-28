@@ -72,7 +72,7 @@ void Translator::operator()(const leaf& l) {
         }
         sets.push_back(s.pred_actions);
     }
-    m_backend.install(match, sets, prio);
+    m_backend.install(match, sets, prio, l.flow_settings);
 }
 
 } // namespace fdd

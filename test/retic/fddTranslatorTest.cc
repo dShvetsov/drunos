@@ -25,7 +25,7 @@ TEST(FddTranslation, TranslateEmpty) {
         install(
             oxm::field_set{},
             std::vector<oxm::field_set>{},
-            _
+            _, _
         )
     );
     boost::apply_visitor(tranlator, d);
@@ -37,7 +37,7 @@ TEST(FddTranslation, TranslateOneAction) {
         install(
             oxm::field_set{},
             match{oxm::field_set{}},
-            _
+            _, _
         )
     );
     fdd::diagram d = fdd::leaf{{oxm::field_set{}}};
@@ -54,10 +54,14 @@ TEST(FddTranslation, TranslateSimpleNode) {
     };
 
     uint16_t prio_1, prio_2;
-    EXPECT_CALL(backend, install(oxm::field_set{F<1>() == 1}, match{oxm::field_set{F<2>() == 2}}, _))
-        .WillOnce(SaveArg<2>(&prio_1));
+    EXPECT_CALL(backend, 
+        install(
+            oxm::field_set{F<1>() == 1},
+            match{oxm::field_set{F<2>() == 2}},
+            _, _
+    )).WillOnce(SaveArg<2>(&prio_1));
 
-    EXPECT_CALL(backend, install(oxm::field_set{}, match{oxm::field_set{F<3>() == 3}}, _))
+    EXPECT_CALL(backend, install(oxm::field_set{}, match{oxm::field_set{F<3>() == 3}}, _, _))
         .WillOnce(SaveArg<2>(&prio_2));
 
     fdd::Translator translator{backend};
@@ -78,14 +82,17 @@ TEST(FddTranslation, EqualFieldsEqualPriorities) {
     };
 
     uint16_t prio_1, prio_2, prio_3;
-    EXPECT_CALL(backend, install(oxm::field_set{F<1>() == 1}, match{oxm::field_set{F<10>() == 1}}, _))
-        .WillOnce(SaveArg<2>(&prio_1));
+    EXPECT_CALL(backend,
+        install(oxm::field_set{F<1>() == 1}, match{oxm::field_set{F<10>() == 1}}, _, _)
+    ).WillOnce(SaveArg<2>(&prio_1));
 
-    EXPECT_CALL(backend, install(oxm::field_set{F<1>() == 2}, match{oxm::field_set{F<20>() == 2}}, _))
-        .WillOnce(SaveArg<2>(&prio_2));
+    EXPECT_CALL(backend,
+        install(oxm::field_set{F<1>() == 2}, match{oxm::field_set{F<20>() == 2}}, _, _)
+    ).WillOnce(SaveArg<2>(&prio_2));
 
-    EXPECT_CALL(backend, install(oxm::field_set{}, match{oxm::field_set{F<30>() == 3}}, _))
-        .WillOnce(SaveArg<2>(&prio_3));
+    EXPECT_CALL(backend, 
+        install(oxm::field_set{}, match{oxm::field_set{F<30>() == 3}}, _, _)
+    ).WillOnce(SaveArg<2>(&prio_3));
 
     fdd::Translator translator{backend};
     boost::apply_visitor(translator, d);
@@ -106,14 +113,17 @@ TEST(FddTranslation, DiffFieldsDiffPriorities) {
     };
 
     uint16_t prio_1, prio_2, prio_3;
-    EXPECT_CALL(backend, install(oxm::field_set{F<1>() == 1}, match{oxm::field_set{F<10>() == 1}}, _))
-        .WillOnce(SaveArg<2>(&prio_1));
+    EXPECT_CALL(backend, 
+        install(oxm::field_set{F<1>() == 1}, match{oxm::field_set{F<10>() == 1}}, _, _)
+    ).WillOnce(SaveArg<2>(&prio_1));
 
-    EXPECT_CALL(backend, install(oxm::field_set{F<2>() == 2}, match{oxm::field_set{F<20>() == 2}}, _))
-        .WillOnce(SaveArg<2>(&prio_2));
+    EXPECT_CALL(backend,
+        install(oxm::field_set{F<2>() == 2}, match{oxm::field_set{F<20>() == 2}}, _, _)
+    ).WillOnce(SaveArg<2>(&prio_2));
 
-    EXPECT_CALL(backend, install(oxm::field_set{}, match{oxm::field_set{F<30>() == 3}}, _))
-        .WillOnce(SaveArg<2>(&prio_3));
+    EXPECT_CALL(backend,
+        install(oxm::field_set{}, match{oxm::field_set{F<30>() == 3}}, _, _)
+    ).WillOnce(SaveArg<2>(&prio_3));
 
     fdd::Translator translator{backend};
     boost::apply_visitor(translator, d);
@@ -128,7 +138,7 @@ TEST(FddTranslation, BarrierRule) {
     auto pf = boost::get<PacketFunction>(p);
     fdd::diagram d = fdd::leaf{{ {oxm::field_set{}, pf}}};
 
-    EXPECT_CALL(backend, install(_, _,_)).Times(0);
+    EXPECT_CALL(backend, install(_, _,_, _)).Times(0);
     EXPECT_CALL(backend, installBarrier(_, _)).Times(1);
 
     fdd::Translator translator{backend};
@@ -144,7 +154,7 @@ TEST(FddTranslation, WithPreMatchAndPrios) {
         install(
             oxm::field_set{F<1>() == 1},
             std::vector<oxm::field_set>{},
-            _
+            _, _
         )
     ).WillOnce(SaveArg<2>(&prio));
     boost::apply_visitor(tranlator, d);
@@ -157,7 +167,7 @@ TEST(FddTranslation, WithPreMatchAndPrios) {
 TEST(TraceTreeTranslation, Unexplored) {
     MockBackend backend;
     trace_tree::node root = trace_tree::unexplored{};
-    EXPECT_CALL(backend, install(_, _, _)).Times(0);
+    EXPECT_CALL(backend, install(_, _, _, _)).Times(0);
     EXPECT_CALL(backend, installBarrier(_, _)).Times(0);
     trace_tree::Translator translator{backend};
     boost::apply_visitor(translator, root);

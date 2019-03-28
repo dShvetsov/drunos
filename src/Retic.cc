@@ -100,7 +100,12 @@ namespace runos {
 
 // TODO: remove code duplication of switch detection in install and installBarrier method
 
-void Of13Backend::install(oxm::field_set match, std::vector<oxm::field_set> actions, uint16_t prio) {
+void Of13Backend::install(
+    oxm::field_set match,
+    std::vector<oxm::field_set> actions,
+    uint16_t prio,
+    retic::FlowSettings flow_settings
+) {
     static const auto ofb_switch_id = oxm::switch_id();
     auto switch_id_it = match.find(oxm::type(ofb_switch_id));
     if (switch_id_it != match.end()) {

@@ -39,7 +39,8 @@ TEST(BackendTest, DropPacket) {
     backend.install(
         oxm::field_set{F<1>() == 1},
         {oxm::field_set{F<2>() == 2}},
-        10
+        10,
+        FlowSettings{}
     );
 }
 
@@ -59,7 +60,8 @@ TEST(BackendTest, InstallSimpleRule) {
     backend.install(
         oxm::field_set{F<1>() == 1},
         {oxm::field_set{F<2>() == 2, oxm::out_port() == 101}},
-        10
+        10,
+        FlowSettings{}
     );
 }
 
@@ -79,7 +81,8 @@ TEST(BackendTest, NoActions) {
     backend.install(
         oxm::field_set{F<1>() == 1},
         {},
-        10
+        10,
+        FlowSettings{}
     );
 }
 
@@ -116,7 +119,8 @@ TEST(BackendTest, MultiActions) {
             oxm::field_set{F<2>() == 2, oxm::out_port() == 2},
             oxm::field_set{F<3>() == 3, oxm::out_port() == 3}
         },
-        10
+        10,
+        FlowSettings{}
     );
 }
 
@@ -144,7 +148,8 @@ TEST(BackendTest, TwoSwitch) {
     backend.install(
         oxm::field_set{},
         {},
-        10
+        10,
+        FlowSettings{}
     );
 }
 
@@ -172,7 +177,8 @@ TEST(BackendTest, TwoSwitchOneRule) {
     backend.install(
         oxm::field_set{oxm::switch_id() == 2},
         {},
-        10
+        10,
+        FlowSettings{}
     );
 }
 
@@ -193,7 +199,8 @@ TEST(BackendTest, NoSwitchInAction) {
     backend.install(
         oxm::field_set{oxm::switch_id() == 2},
         {},
-        10
+        10,
+        FlowSettings{}
     );
 }
 

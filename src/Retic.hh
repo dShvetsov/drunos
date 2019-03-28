@@ -55,7 +55,13 @@ public:
         : m_drivers(drivers), m_table(table)
     { }
 
-    void install(oxm::field_set match, std::vector<oxm::field_set> actions, uint16_t prio) override;
+    void install(
+        oxm::field_set match,
+        std::vector<oxm::field_set> actions,
+        uint16_t prio,
+        retic::FlowSettings flow_settings
+    ) override;
+
     void installBarrier(oxm::field_set match, uint16_t prio) override;
 
     // TODO: TestMe

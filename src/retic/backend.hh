@@ -1,6 +1,7 @@
 #pragma once
 
 #include <oxm/field_set.hh>
+#include "policies.hh"
 
 namespace runos {
 namespace retic {
@@ -10,7 +11,8 @@ public:
     virtual void install(
         oxm::field_set match,
         std::vector<oxm::field_set> action,
-        uint16_t piority
+        uint16_t piority,
+        FlowSettings flow_settings
     ) = 0;
     virtual void installBarrier(
         oxm::field_set match,

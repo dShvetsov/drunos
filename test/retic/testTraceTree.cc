@@ -220,7 +220,7 @@ TEST(OnLineTranslation, LeafAction) {
     MockBackend backend;
     trace_tree::node root = trace_tree::unexplored{};
     trace_tree::Augmention augmenter(&root, &backend, oxm::field_set{}, 10, 200);
-    EXPECT_CALL(backend, install(oxm::field_set{}, match{oxm::field_set{F<1>() == 1}}, _));
+    EXPECT_CALL(backend, install(oxm::field_set{}, match{oxm::field_set{F<1>() == 1}}, _, _));
     augmenter.finish(modify(F<1>() << 1));
 }
 
@@ -230,7 +230,7 @@ TEST(OnLineTranslation, LoadMethod) {
     tracer::trace_node n = tracer::load_node{F<1>() == 2};
     trace_tree::Augmention augmenter(&root, &backend, oxm::field_set{}, 10, 200);
     boost::apply_visitor(augmenter, n);
-    EXPECT_CALL(backend, install(oxm::field_set{F<1>() == 2}, match{oxm::field_set{F<1>() == 1}}, _));
+    EXPECT_CALL(backend, install(oxm::field_set{F<1>() == 2}, match{oxm::field_set{F<1>() == 1}}, _, _));
     augmenter.finish(modify(F<1>() << 1));
 }
 
@@ -246,12 +246,12 @@ TEST(OnLineTranslation, TestMethod) {
 
     boost::apply_visitor(augmenter, positive_n);
 
-    EXPECT_CALL(backend, install(oxm::field_set{F<1>() == 2}, match{oxm::field_set{F<1>() == 1}}, _))
+    EXPECT_CALL(backend, install(oxm::field_set{F<1>() == 2}, match{oxm::field_set{F<1>() == 1}}, _, _))
         .WillOnce(SaveArg<2>(&positive_prio));
     augmenter.finish(modify(F<1>() << 1));
 
     EXPECT_CALL(backend, installBarrier(_, _)).Times(0);
-    EXPECT_CALL(backend, install(oxm::field_set{}, match{oxm::field_set{F<2>() == 2}}, _))
+    EXPECT_CALL(backend, install(oxm::field_set{}, match{oxm::field_set{F<2>() == 2}}, _, _))
         .WillOnce(SaveArg<2>(&negative_prio));
 
     tracer::trace_node negative_n = tracer::test_node({F<1>() == 2, false});
@@ -357,7 +357,7 @@ TEST(TraceTreeComplex, GetTracesMergeAndAugment) {
         install(
             oxm::field_set{F<1>() == 1, F<3>() == 3},
             match{oxm::field_set{F<2>() == 2}},
-            _
+            _, _
         )
     ).Times(1);
 
@@ -396,7 +396,7 @@ TEST(TraceTreeComplex, GetTracesMergeAndAugmentNestedFunction) {
         install(
             oxm::field_set{F<1>() == 1, F<3>() == 3},
             match{oxm::field_set{F<2>() == 2}},
-            _
+            _, _
         )
     ).Times(0);
 
