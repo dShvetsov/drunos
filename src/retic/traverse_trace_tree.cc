@@ -4,30 +4,35 @@ namespace runos {
 namespace retic {
 namespace trace_tree {
 
-std::shared_ptr<fdd::diagram_holder> Traverser::operator()(unexplored& n) {
-    return nullptr;
+using namespace traverser;
+
+ret_type Traverser::operator()(unexplored& n) {
+    return {nullptr, m_match};
 }
 
-std::shared_ptr<fdd::diagram_holder> Traverser::operator()(load_node& load)
+ret_type Traverser::operator()(load_node& load)
 {
     auto it = load.cases.find( m_pkt.load(load.mask).value_bits() );
     if (it != load.cases.end()) {
+        oxm::type t = load.mask.type();
+        m_match.modify( (t == it->first) & load.mask  );
         return boost::apply_visitor(*this, it->second);
     } else {
-        return nullptr;
+        return {nullptr, m_match};
     }
 }
 
-std::shared_ptr<fdd::diagram_holder> Traverser::operator()(test_node& test) {
+ret_type Traverser::operator()(test_node& test) {
         if (m_pkt.test(test.need)) {
+            m_match.modify(test.need);
             return boost::apply_visitor(*this, test.positive);
         } else {
             return boost::apply_visitor(*this, test.negative);
         }
 }
 
-std::shared_ptr<fdd::diagram_holder> Traverser::operator()(leaf_node& ln) {
-    return ln.kat_diagram;
+ret_type Traverser::operator()(leaf_node& ln) {
+    return {ln.kat_diagram, m_match};
 }
 
 } // namespace trace_tree

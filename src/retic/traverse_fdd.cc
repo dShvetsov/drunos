@@ -19,7 +19,7 @@ leaf& Traverser::operator()(leaf& l) {
     )) {
         // has trace_tree in leaf
         trace_tree::Traverser traverser{m_pkt};
-        auto next_fdd = boost::apply_visitor(traverser, l.maple_tree);
+        auto [next_fdd, maple_match] = boost::apply_visitor(traverser, l.maple_tree);
         if (next_fdd == nullptr) {
             // has no value for this packet
             // should create it

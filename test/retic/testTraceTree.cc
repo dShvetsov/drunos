@@ -283,9 +283,8 @@ TEST(TraverseTraceTree, Unexplored) {
     trace_tree::node root = trace_tree::unexplored{};
     oxm::field_set fs;
     trace_tree::Traverser traverser(fs);
-    auto res = boost::apply_visitor(traverser, root);
+    auto [res, match] = boost::apply_visitor(traverser, root);
     EXPECT_EQ(nullptr, res);
-
 }
 
 TEST(TraverseTraceTree, Load) {
@@ -303,11 +302,12 @@ TEST(TraverseTraceTree, Load) {
     oxm::field_set fs2 = oxm::field_set{F<1>() == 2};
 
     trace_tree::Traverser traverser1(fs1);
-    auto res1 = boost::apply_visitor(traverser1, root);
+    auto [res1, match1] = boost::apply_visitor(traverser1, root);
     EXPECT_EQ(dh, res1);
+    EXPECT_EQ(match1, oxm::field_set{F<1>() == 1});
 
     trace_tree::Traverser traverser2(fs2);
-    auto res2 = boost::apply_visitor(traverser2, root);
+    auto [res2, match2] = boost::apply_visitor(traverser2, root);
     EXPECT_EQ(nullptr, res2);
 
 }
@@ -332,12 +332,14 @@ TEST(TraverseTraceTree, Test) {
     oxm::field_set fs2 = oxm::field_set{F<1>() == 2};
 
     trace_tree::Traverser traverser1(fs1);
-    auto res1 = boost::apply_visitor(traverser1, root);
+    auto [res1, match1] = boost::apply_visitor(traverser1, root);
     EXPECT_EQ(dh_pos, res1);
+    EXPECT_EQ(match1, oxm::field_set{F<1>() == 1});
 
     trace_tree::Traverser traverser2(fs2);
-    auto res2 = boost::apply_visitor(traverser2, root);
+    auto [res2, match2] = boost::apply_visitor(traverser2, root);
     EXPECT_EQ(dh_neg, res2);
+    EXPECT_EQ(match2, oxm::field_set{});
 }
 
 // TODO Test throw exceoption from methods
