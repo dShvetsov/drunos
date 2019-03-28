@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include "common.hh"
+
 #include "retic/tracer.hh"
 #include "retic/fdd.hh"
 #include "retic/policies.hh"
@@ -11,10 +13,6 @@ using namespace runos;
 using namespace retic;
 using namespace tracer;
 using namespace ::testing;
-
-template <size_t N>
-struct F : oxm::define_type< F<N>, 0, N, 32, uint32_t, uint32_t, true>
-{ };
 
 TEST(TracerTest, ReturnPolicy) {
     policy p = handler([](Packet& pkt){return stop(); });

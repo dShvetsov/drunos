@@ -25,30 +25,20 @@ void Retic::init(Loader* loader, const Config& root_config)
     ctrl->registerHandler<of13::PacketIn>([=](of13::PacketIn& pi, SwitchConnectionPtr conn) {
         LOG(INFO) << "PacketIn";
 
-        uint8_t buffer[1500];
         PacketParser pp{pi, conn->dpid()};
 
         retic::fdd::Traverser traverser(pp, m_backend.get());
         auto& leaf = boost::apply_visitor(traverser, m_fdd);
 
-        retic::Applier runtime{pp};
-        boost::apply_visitor(runtime, m_policies[m_main_policy]);
-        for (auto& [p, meta]: runtime.results()) {
-            PacketParser* pp_pkt = packet_cast<PacketParser*>(*p);
-            of13::PacketOut po;
-            po.xid(0x123);
-            po.buffer_id(OFP_NO_BUFFER);
-            uint32_t out_port = p->load(oxm::out_port());
-            LOG(INFO) << "Move packet to " << out_port;
-            if (out_port != 0) {
-                po.in_port(p->load(oxm::in_port()));
-                po.add_action(new of13::OutputAction(out_port, 0));
-                size_t len = pp_pkt->total_bytes();
-                pp_pkt->serialize_to(sizeof(buffer), buffer);
-                po.data(buffer, len);
-                conn->send(po);
+        std::vector<oxm::field_set> sets;
+        sets.reserve(sets.size());
+        for (auto& s: leaf.sets) {
+            if (s.body.has_value()) {
+                throw std::runtime_error("There must not be leaf with handler");
             }
+            sets.push_back(s.pred_actions);
         }
+        m_backend->packetOuts(static_cast<uint8_t*>(pi.data()), pi.data_len(), sets, conn->dpid());
     });
 
     m_table = ctrl->getTable("retic");
@@ -145,6 +135,26 @@ void Of13Backend::installBarrier(oxm::field_set match, uint16_t prio) {
         for (auto [dpid, driver]: m_drivers) {
             auto flow = driver->installRule(match, prio, act, m_table);
             m_storage.push_back(flow);
+        }
+    }
+}
+
+void Of13Backend::packetOuts(uint8_t* data, size_t data_len, std::vector<oxm::field_set> actions, uint64_t dpid) {
+    static const auto ofb_out_port = oxm::out_port();
+    auto driver = m_drivers.at(dpid);
+    if (actions.empty()) {
+        return;
+    }
+    for (auto& action: actions) {
+        Actions driver_acts{};
+        auto out_port_it = action.find(oxm::type(ofb_out_port));
+        if (out_port_it != action.end()) {
+            Packet& pkt_iface(action);
+            uint32_t out_port = pkt_iface.load(ofb_out_port);
+            action.erase(oxm::mask<>(ofb_out_port));
+            driver_acts.out_port = out_port;
+            driver_acts.set_fields = action;
+            driver->packetOut(data, data_len, driver_acts);
         }
     }
 }

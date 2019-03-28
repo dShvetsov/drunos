@@ -16,6 +16,12 @@ public:
         oxm::field_set match,
         uint16_t priority
     ) = 0;
+    virtual void packetOuts(
+        uint8_t* data,
+        size_t data_len,
+        std::vector<oxm::field_set> actions,
+        uint64_t dpid
+    ) = 0;
     virtual ~Backend() = default;
 };
 

@@ -39,6 +39,20 @@ of13::ApplyActions convert_to_apply_action(const Actions& acts) {
     return ret;
 }
 
+ActionList convert_to_action_list(const Actions& acts) {
+    ActionList ret;
+    for (const oxm::field<>& f : acts.set_fields) {
+        ret.add_action(new of13::SetFieldAction(new FluidOXMAdapter(f)));
+    }
+    if (acts.out_port != 0) {
+        ret.add_action(new of13::OutputAction(acts.out_port, 0)); //OFP_NO_BUFFER));
+    }
+    if (acts.group_id != 0) {
+        ret.add_action(new of13::GroupAction(acts.group_id));
+    }
+    return ret;
+}
+
 class Fluid13Rule: public Rule {
 public:
     Fluid13Rule(
@@ -175,6 +189,15 @@ public:
         );
         m_id_gen++;
         return ret;
+    }
+
+    void packetOut(uint8_t* data, size_t data_len, Actions actions) override {
+        of13::PacketOut po;
+        po.xid(222);
+        po.buffer_id(OFP_NO_BUFFER);
+        po.actions(convert_to_action_list(actions));
+        po.data(data, data_len);
+        m_conn->send(po);
     }
 private:
     SwitchConnectionPtr m_conn;

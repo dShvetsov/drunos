@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include "common.hh"
+
 #include <vector>
 
 #include "oxm/openflow_basic.hh"
@@ -13,14 +15,11 @@ using namespace runos;
 using namespace retic;
 using namespace ::testing;
 
-template <size_t N>
-struct F : oxm::define_type< F<N>, 0, N, 32, uint32_t, uint32_t, true>
-{ };
-
 class MockDriver: public OFDriver {
 public:
     MOCK_METHOD4(installRule, RulePtr(oxm::field_set, uint16_t, Actions, uint8_t));
     MOCK_METHOD2(installGroup, GroupPtr(GroupType, std::vector<Actions>));
+    MOCK_METHOD3(packetOut, void(uint8_t* data, size_t data_len, Actions));
 };
 
 

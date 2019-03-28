@@ -42,6 +42,7 @@ class OFDriver {
 public:
     virtual RulePtr installRule(oxm::field_set match, uint16_t prio, Actions actions, uint8_t table) = 0;
     virtual GroupPtr installGroup(GroupType type, std::vector<Actions> buckets) = 0;
+    virtual void packetOut(uint8_t* data, size_t data_len, Actions action) = 0;
     virtual ~OFDriver() = default;
 };
 

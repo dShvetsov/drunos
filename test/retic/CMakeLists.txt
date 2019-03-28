@@ -1,5 +1,6 @@
 
 add_executable(runReticTest
+        common.hh
         runReticTest.cc
         reticTest.cc
         reticPacketParse.cc

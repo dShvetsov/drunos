@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include "common.hh"
+
 #include "retic/applier.hh"
 #include "retic/policies.hh"
 #include "oxm/openflow_basic.hh"
@@ -86,10 +88,6 @@ TEST(PacketParserTest, Clone)
 
 }
 
-// TODO: move to oxm test directory
-template <size_t N>
-struct F : oxm::define_type< F<N>, 0, N, 32, uint32_t, uint32_t, true>
-{ };
 TEST(FieldSetTest, Clone) 
 {
     oxm::field_set fs{F<1>() == 1, F<2>() == 2, F<3>() == 3};
