@@ -112,6 +112,7 @@ void Of13Backend::install(
 ) {
     if (flow_settings.hard_timeout == retic::duration::zero()) {
         // there is no need to install its flow, becouse timeouts is zero
+        return;
     }
     static const auto ofb_switch_id = oxm::switch_id();
     auto switch_id_it = match.find(oxm::type(ofb_switch_id));
