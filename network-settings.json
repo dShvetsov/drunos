@@ -4,34 +4,27 @@
     "services": [
         "link-discovery",
         "rest-listener",
-        "host-manager",
         "webui",
         "static-flow-pusher",
         "switch-stats",
         "stp",
         "flow-manager",
         "rest-multipart",
-        "maple",
         "command-line-interface",
         "rest-flowmod",
         "switch-manager-cli",
-        "maple",
-        "learning-switch",
-        "drop-all",
-        "no-maple-rules",
         "test-apps",
         "retic",
         "retic-cli"
     ],
 
     "retic":  {
-        "main": "func"
+        "main": "with_link_discovery"
     },
 
     "tables": {
         "static-flow-pusher" : 1,
-        "retic": 2,
-        "maple" : 3
+        "retic": 2
     },
 
     "flow-manager" : {
@@ -48,15 +41,6 @@
          "nthreads": 1,
          "cbench": false
    },
-
-    "maple": {
-          "pipeline": [
-             "link-discovery",
-             "host-manager",
-             "drop-all",
-             "no-maple-rules"
-         ]
-    },
 
     "loader": {
         "threads": 2

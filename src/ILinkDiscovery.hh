@@ -19,6 +19,8 @@
 #include "Application.hh"
 #include "Loader.hh"
 
+#include "retic/policies.hh"
+
 struct switch_and_port
 {
     uint64_t dpid;

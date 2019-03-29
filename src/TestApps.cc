@@ -2,6 +2,7 @@
 #include "Common.hh"
 #include "Retic.hh"
 #include "retic/policies.hh"
+#include "LinkDiscovery.hh"
 
 
 using namespace runos;
@@ -23,8 +24,14 @@ public:
             filter(switch_id == 1) >> (fwd(1) + fwd(2)) | filter(switch_id == 2) >> (fwd(1) + fwd(2))
         );
         retic->registerPolicy("func", handler([](Packet& pkt){ return fwd(1) + fwd(2); }));
+
+        // TODO: make it withou dynamic_cast
+        auto link_discovery = dynamic_cast<LinkDiscovery*> (LinkDiscovery::get(loader));
+
+        retic->registerPolicy("with_link_discovery",
+            link_discovery->getPolicy() + (fwd(1) + fwd(2) + fwd(3)));
     }
 };
 
-REGISTER_APPLICATION(TestApps, {"retic", ""})
+REGISTER_APPLICATION(TestApps, {"retic", "link-discovery", ""})
 

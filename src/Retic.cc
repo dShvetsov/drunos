@@ -59,7 +59,8 @@ void Retic::startUp(Loader* loader) {
         m_fdd = retic::fdd::compile(m_policies.at(m_main_policy));
     } catch (std::out_of_range& oor) {
         LOG(ERROR) << "Can't find policy " << m_main_policy;
-        throw;
+        // TODO: throw more properly exception
+        throw std::runtime_error("Couldn't find main policy");
     }
 }
 

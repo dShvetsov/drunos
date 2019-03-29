@@ -27,6 +27,8 @@
 #include "ILinkDiscovery.hh"
 #include "Controller.hh"
 
+#include "retic/policies.hh"
+
 struct DiscoveredLink {
     typedef std::chrono::time_point<std::chrono::steady_clock>
             valid_through_t;
@@ -49,6 +51,8 @@ class LinkDiscovery : public Application
 public:
     void init(Loader* provider, const Config& config) override;
     void startUp(Loader* provider) override;
+
+    runos::retic::policy getPolicy();
 
 signals:
     void linkDiscovered(switch_and_port from, switch_and_port to) override;
@@ -74,3 +78,4 @@ private:
     void sendLLDP(Switch *dp, of13::Port port);
     void clearLinkAt(const switch_and_port & ap);
 };
+

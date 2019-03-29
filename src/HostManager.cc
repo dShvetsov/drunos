@@ -30,7 +30,8 @@
 #include "Flow.hh"
 #include "Maple.hh"
 
-REGISTER_APPLICATION(HostManager, {"maple","switch-manager", "rest-listener", ""})
+// REGISTER_APPLICATION(HostManager, {"maple","switch-manager", "rest-listener", ""})
+REGISTER_APPLICATION(HostManager, {"switch-manager", "rest-listener", ""})
 
 struct HostImpl {
     uint64_t id;
@@ -122,54 +123,54 @@ HostManager::~HostManager()
 void HostManager::init(Loader *loader, const Config &config)
 {
     m_switch_manager = SwitchManager::get(loader);
-    auto maple = Maple::get(loader);
-
-    const auto ofb_in_port = oxm::in_port();
-    const auto ofb_eth_type = oxm::eth_type();
-    const auto ofb_eth_src = oxm::eth_src();
-    const auto ofb_arp_spa = oxm::arp_spa();
-    const auto ofb_ipv4_src = oxm::ipv4_src();
-    const auto of_switch_id = oxm::switch_id();
-
-    maple->registerHandler("host-manager",
-            [=](Packet& pkt, FlowPtr, Decision decision) {
-                auto tpkt = packet_cast<TraceablePacket>(pkt);
-
-                ethaddr eth_src = pkt.load(ofb_eth_src);
-                std::string host_mac = boost::lexical_cast<std::string>(eth_src);
-
-                ipv4addr host_ip("0.0.0.0");
-                if (pkt.test(ofb_eth_type == 0x0800)) {
-                    host_ip = tpkt.watch(ofb_ipv4_src);
-                } else if (pkt.test(ofb_eth_type == 0x0806)) {
-                    host_ip = ipv4addr(tpkt.watch(ofb_arp_spa));
-                }
-
-                if (isSwitch(host_mac))
-                    return decision;
-
-                uint32_t in_port = tpkt.watch(ofb_in_port);
-                if (in_port > of13::OFPP_MAX)
-                    return decision;
-
-                if (not findMac(host_mac)) {
-                    Switch* sw =
-                        m_switch_manager->getSwitch(tpkt.watch(of_switch_id));
-                    addHost(sw, host_ip, host_mac, in_port);
-
-                    LOG(INFO) << "Host discovered. MAC: " << host_mac
-                              << ", IP: " << host_ip
-                              << ", Switch ID: " << sw->id() << ", port: " << in_port;
-                } else {
-                    Host* h = getHost(host_mac);
-                    if (host_ip != "0.0.0.0") {
-                        h->ip(host_ip);
-                    }
-                }
-
-                return decision;
-        }
-    );
+//    auto maple = Maple::get(loader);
+//
+//    const auto ofb_in_port = oxm::in_port();
+//    const auto ofb_eth_type = oxm::eth_type();
+//    const auto ofb_eth_src = oxm::eth_src();
+//    const auto ofb_arp_spa = oxm::arp_spa();
+//    const auto ofb_ipv4_src = oxm::ipv4_src();
+//    const auto of_switch_id = oxm::switch_id();
+//
+//    maple->registerHandler("host-manager",
+//            [=](Packet& pkt, FlowPtr, Decision decision) {
+//                auto tpkt = packet_cast<TraceablePacket>(pkt);
+//
+//                ethaddr eth_src = pkt.load(ofb_eth_src);
+//                std::string host_mac = boost::lexical_cast<std::string>(eth_src);
+//
+//                ipv4addr host_ip("0.0.0.0");
+//                if (pkt.test(ofb_eth_type == 0x0800)) {
+//                    host_ip = tpkt.watch(ofb_ipv4_src);
+//                } else if (pkt.test(ofb_eth_type == 0x0806)) {
+//                    host_ip = ipv4addr(tpkt.watch(ofb_arp_spa));
+//                }
+//
+//                if (isSwitch(host_mac))
+//                    return decision;
+//
+//                uint32_t in_port = tpkt.watch(ofb_in_port);
+//                if (in_port > of13::OFPP_MAX)
+//                    return decision;
+//
+//                if (not findMac(host_mac)) {
+//                    Switch* sw =
+//                        m_switch_manager->getSwitch(tpkt.watch(of_switch_id));
+//                    addHost(sw, host_ip, host_mac, in_port);
+//
+//                    LOG(INFO) << "Host discovered. MAC: " << host_mac
+//                              << ", IP: " << host_ip
+//                              << ", Switch ID: " << sw->id() << ", port: " << in_port;
+//                } else {
+//                    Host* h = getHost(host_mac);
+//                    if (host_ip != "0.0.0.0") {
+//                        h->ip(host_ip);
+//                    }
+//                }
+//
+//                return decision;
+//        }
+//    );
 
     QObject::connect(m_switch_manager, &SwitchManager::switchDiscovered,
                      this, &HostManager::onSwitchDiscovered);
