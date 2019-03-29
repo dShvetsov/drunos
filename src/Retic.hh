@@ -64,7 +64,6 @@ public:
 
     void installBarrier(oxm::field_set match, uint16_t prio) override;
 
-    // TODO: TestMe
     void packetOuts (uint8_t* data, size_t data_len, std::vector<oxm::field_set> actions, uint64_t dpid) override;
 private:
     void install_on(

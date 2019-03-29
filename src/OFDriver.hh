@@ -22,7 +22,11 @@ struct Actions {
                                // TODO: what is need to do, when flow deleted by timeout
     oxm::field_set set_fields;
     friend bool operator==(const Actions& lhs, const Actions& rhs) {
-        return lhs.out_port == rhs.out_port && lhs.group_id == rhs.group_id && lhs.set_fields == rhs.set_fields;
+        return lhs.out_port == rhs.out_port &&
+               lhs.group_id == rhs.group_id &&
+               lhs.set_fields == rhs.set_fields &&
+               lhs.hard_timeout == rhs.hard_timeout &&
+               lhs.idle_timeout == rhs.idle_timeout;
     }
 };
 

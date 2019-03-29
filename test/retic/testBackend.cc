@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include <chrono>
+
 #include "common.hh"
 
 #include <vector>
@@ -8,12 +10,15 @@
 #include "oxm/openflow_basic.hh"
 #include "oxm/field_set.hh"
 
+#include "retic/policies.hh"
 #include "Retic.hh"
 #include "OFDriver.hh"
 
 using namespace runos;
 using namespace retic;
 using namespace ::testing;
+
+using secs = std::chrono::seconds;
 
 class MockDriver: public OFDriver {
 public:
@@ -268,5 +273,91 @@ TEST(BackendTest, BarrierRuleNoSwitch) {
     backend.installBarrier(
         oxm::field_set{oxm::switch_id() == 2},
         10
+    );
+}
+
+TEST(BackendTest, TestPacketOuts) {
+    auto mock_driver = std::make_shared<MockDriver>();
+    OFDriverPtr driver = mock_driver;
+
+    std::vector<oxm::field_set> actions = {
+        oxm::field_set{oxm::out_port() == 1},
+        oxm::field_set{F<1>() == 1, oxm::out_port() == 2},
+        oxm::field_set{F<2>() == 2}
+    };
+
+    Of13Backend backend({{1, driver}}, 1);
+
+    uint8_t data[16];
+    size_t data_len = 16;
+
+    EXPECT_CALL(*mock_driver, packetOut(data, data_len, Actions{.out_port = 1}));
+    EXPECT_CALL(
+        *mock_driver,
+        packetOut(
+            data, data_len,
+            Actions{.out_port = 2, .set_fields = oxm::field_set{F<1>() == 1}}
+        )
+    );
+
+    backend.packetOuts(data, data_len, actions, 1);
+}
+
+TEST(BackendTest, FlowSettings) {
+    auto mock_driver = std::make_shared<MockDriver>();
+    OFDriverPtr driver = mock_driver;
+
+    Of13Backend backend({{1, driver}}, 1);
+    std::vector<oxm::field_set> actions = {
+        oxm::field_set{oxm::out_port() == 1}
+    };
+
+    EXPECT_CALL(*mock_driver,
+        installRule(
+            _, _, Actions{.out_port = 1, .idle_timeout = 10, .hard_timeout = 20}, _
+        )
+    ).Times(1);
+
+    backend.install(
+        oxm::field_set{}, actions, 10,
+        retic::FlowSettings{.idle_timeout = secs(10), .hard_timeout = secs(20)}
+    );
+}
+
+TEST(BackendTest, FlowSettingsInfinitySettings) {
+    auto mock_driver = std::make_shared<MockDriver>();
+    OFDriverPtr driver = mock_driver;
+
+    Of13Backend backend({{1, driver}}, 1);
+    std::vector<oxm::field_set> actions = {
+        oxm::field_set{oxm::out_port() == 1}
+    };
+
+    EXPECT_CALL(*mock_driver,
+        installRule(
+            _, _, Actions{.out_port = 1, .idle_timeout = 0, .hard_timeout = 0}, _
+        )
+    ).Times(1);
+
+    backend.install(
+        oxm::field_set{}, actions, 10,
+        retic::FlowSettings{.idle_timeout = duration::max(), .hard_timeout = duration::max()}
+    );
+}
+
+TEST(BackendTest, FlowSettingsNoInstallRule) {
+    auto mock_driver = std::make_shared<MockDriver>();
+    OFDriverPtr driver = mock_driver;
+
+    Of13Backend backend({{1, driver}}, 1);
+    std::vector<oxm::field_set> actions = {
+        oxm::field_set{oxm::out_port() == 1}
+    };
+
+    EXPECT_CALL(*mock_driver, installRule(_, _, _, _)).Times(0);
+
+    backend.install(
+        oxm::field_set{}, actions, 10,
+        retic::FlowSettings{.idle_timeout = duration::zero(), .hard_timeout = duration::zero()}
     );
 }
