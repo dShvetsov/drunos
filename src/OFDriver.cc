@@ -76,6 +76,7 @@ public:
             fm.table_id(m_table);
             fm.cookie(m_cookie);
             fm.match(make_of_match(m_match));
+            fm.priority(prio);
 
             fm.idle_timeout(m_acts.idle_timeout);
             fm.hard_timeout(m_acts.hard_timeout);

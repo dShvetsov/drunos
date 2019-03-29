@@ -8,6 +8,7 @@
 #include "retic/trace_tree.hh"
 #include "retic/trace_tree_translator.hh"
 #include "retic/backend.hh"
+#include "retic/fdd_compiler.hh"
 
 #include "oxm/field_set.hh"
 
@@ -66,7 +67,7 @@ TEST(FddTranslation, TranslateSimpleNode) {
 
     fdd::Translator translator{backend};
     boost::apply_visitor(translator, d);
-    EXPECT_GE(prio_1, prio_2);
+    EXPECT_GT(prio_1, prio_2);
 }
 
 TEST(FddTranslation, EqualFieldsEqualPriorities) {
@@ -97,7 +98,7 @@ TEST(FddTranslation, EqualFieldsEqualPriorities) {
     fdd::Translator translator{backend};
     boost::apply_visitor(translator, d);
     EXPECT_EQ(prio_1, prio_2);
-    EXPECT_GE(prio_2, prio_3);
+    EXPECT_GT(prio_2, prio_3);
 }
 
 TEST(FddTranslation, DiffFieldsDiffPriorities) {
@@ -127,8 +128,8 @@ TEST(FddTranslation, DiffFieldsDiffPriorities) {
 
     fdd::Translator translator{backend};
     boost::apply_visitor(translator, d);
-    EXPECT_GE(prio_1, prio_2);
-    EXPECT_GE(prio_2, prio_3);
+    EXPECT_GT(prio_1, prio_2);
+    EXPECT_GT(prio_2, prio_3);
 }
 
 TEST(FddTranslation, BarrierRule) {
@@ -145,6 +146,25 @@ TEST(FddTranslation, BarrierRule) {
     boost::apply_visitor(translator, d);
 }
 
+TEST(FddTranslation, BarrierWithPolicy) {
+    MockBackend backend;
+
+    uint16_t prio, barrier_prio;
+
+    policy p = (filter(F<2>() == 2) >> handler([](Packet& pkt){return stop();})) +
+                (modify(F<1>() == 1) + modify(F<2>() == 2));
+    fdd::diagram d = fdd::compile(p);
+
+    EXPECT_CALL(backend, install(oxm::field_set{}, _,_, _))
+        .Times(1).WillOnce(SaveArg<2>(&prio));
+    EXPECT_CALL(backend, installBarrier(oxm::field_set{F<2>() == 2}, _))
+        .Times(1).WillOnce(SaveArg<1>(&barrier_prio));
+
+    fdd::Translator translator{backend};
+    boost::apply_visitor(translator, d);
+    EXPECT_GT(barrier_prio, prio);
+}
+
 TEST(FddTranslation, WithPreMatchAndPrios) {
     MockBackend backend;
     uint16_t prio;
@@ -158,8 +178,8 @@ TEST(FddTranslation, WithPreMatchAndPrios) {
         )
     ).WillOnce(SaveArg<2>(&prio));
     boost::apply_visitor(tranlator, d);
-    EXPECT_LE(120, prio) << "Priority must be greater than setted low priority";
-    EXPECT_LE(prio, 400) << "Priority must be less than setted upper priority";
+    EXPECT_LT(120, prio) << "Priority must be greater than setted low priority";
+    EXPECT_LT(prio, 400) << "Priority must be less than setted upper priority";
 }
 
 using secs = std::chrono::seconds;
