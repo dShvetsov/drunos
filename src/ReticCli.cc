@@ -1,11 +1,12 @@
 #include "Retic.hh"
 
 #include <sstream>
+#include <boost/lexical_cast.hpp>
 
 #include "Common.hh"
 #include "CommandLine.hh"
 
-#include "retic/dumper.hh"
+#include "retic/policies.hh"
 
 using namespace cli;
 using namespace runos;
@@ -31,9 +32,10 @@ public:
                out.print("Main function: {}", app->getMainName());
                 if (not vm["verbose"].empty()) {
                     std::stringstream ss;
-                    retic::Dumper dumper(ss);
-                    boost::apply_visitor(dumper, app->getMainPolicy());
-                    out.print("Implementation: {}", ss.str());
+                    out.print(
+                        "Implementation: {}",
+                        boost::lexical_cast<std::string>(app->getMainPolicy())
+                    );
                 }
             }
             if (not vm["policies"].empty()) {
