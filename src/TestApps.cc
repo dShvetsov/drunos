@@ -3,6 +3,7 @@
 #include "Retic.hh"
 #include "retic/policies.hh"
 #include "LinkDiscovery.hh"
+#include "LLDP.hh"
 
 
 using namespace runos;
@@ -29,7 +30,11 @@ public:
         auto link_discovery = dynamic_cast<LinkDiscovery*> (LinkDiscovery::get(loader));
 
         retic->registerPolicy("with_link_discovery",
-            link_discovery->getPolicy() + (fwd(1) + fwd(2) + fwd(3)));
+            link_discovery->getPolicy() +
+            (
+                filter_not(oxm::eth_type() == LLDP_ETH_TYPE) >> (fwd(1) + fwd(2) + fwd(3))
+            )
+        );
     }
 };
 
