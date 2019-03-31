@@ -25,7 +25,8 @@ diagram Compiler::operator()(const Filter& fil) const {
 }
 
 diagram Compiler::operator()(const Negation& neg) const {
-    return boost::apply_visitor(*this, id());
+    diagram d = boost::apply_visitor(*this, neg.pol);
+    return boost::apply_visitor(negation_composition{}, d);
 }
 
 diagram Compiler::operator()(const Modify& mod) const {
@@ -186,6 +187,20 @@ diagram sequential_composition::left_action_applier::operator()(const node& n) c
         // have this type, but other value
         return boost::apply_visitor(*this, n.negative);
     }
+}
+
+diagram negation_composition::operator()(const leaf& l) const {
+    if (l.sets.empty()) {
+        return leaf{{ oxm::field_set{} }, l.flow_settings};
+    } else {
+        return leaf{ {}, l.flow_settings};
+    }
+}
+
+diagram negation_composition::operator()(const node& l) const {
+    diagram positive = boost::apply_visitor(*this, l.positive);
+    diagram negative = boost::apply_visitor(*this, l.negative);
+    return fdd::node{l.field, positive, negative};
 }
 
 

@@ -716,6 +716,65 @@ TEST(FddCompilerTest, FlowSettingsWithTwoActions) {
     EXPECT_EQ(true_value, d);
 }
 
+TEST(FddCompilerTest, FilterFlowSettings) {
+    policy p = filter(F<1>() == 1) >> idle_timeout(sec(20));
+    fdd::diagram d = fdd::compile(p);
+    fdd::diagram true_value = fdd::node {
+        F<1>() == 1,
+        fdd::leaf{{oxm::field_set{}}, FlowSettings{.idle_timeout=sec(20)}},
+        fdd::leaf{}
+    };
+    EXPECT_EQ(true_value, d);
+}
+
+TEST(FddCompilerTest, NegationTest) {
+    policy p = filter_not(F<1>() == 1);
+    fdd::diagram d = fdd::compile(p);
+    fdd::diagram true_value = fdd::node {
+        F<1>() == 1,
+        fdd::leaf{},
+        fdd::leaf{{oxm::field_set{}}}
+    };
+    EXPECT_EQ(true_value, d);
+}
+
+TEST(FddCompilerTest, NegationTestWithSettings) {
+    policy p = filter_not(F<1>() == 1) >> idle_timeout(sec(20));
+    fdd::diagram d = fdd::compile(p);
+    fdd::diagram true_value = fdd::node {
+        F<1>() == 1,
+        fdd::leaf{},
+        fdd::leaf{{oxm::field_set{}}, FlowSettings{.idle_timeout=sec(20)}}
+    };
+    EXPECT_EQ(true_value, d);
+}
+
+TEST(DISABLED_FddCompilerTest, NegationX2TestWithSettings) {
+    // I think this test should failed.
+    // But I have no idea why NegationTestWithSettings is works
+    //
+    policy p = filter_not(F<1>() == 1) >> (filter_not(F<1>() == 1) >> idle_timeout(sec(20)));
+    fdd::diagram d = fdd::compile(p);
+    fdd::diagram true_value = fdd::node {
+        F<1>() == 1,
+        fdd::leaf{{oxm::field_set{}}, FlowSettings{.idle_timeout=sec(20)}},
+        fdd::leaf{}
+    };
+    EXPECT_EQ(true_value, d);
+}
+
+TEST(FddCompilerTest, ComplexNegationTest) {
+    policy p = (filter(F<1>() == 1) >> modify(F<2>() == 1)) +
+               (filter_not(F<1>() == 1) >> modify(F<2>() == 2));
+    fdd::diagram d = fdd::compile(p);
+    fdd::diagram true_value = fdd::node {
+        F<1>() == 1,
+        fdd::leaf{{oxm::field_set{F<2>() == 1}}},
+        fdd::leaf{{oxm::field_set{F<2>() == 2}}}
+    };
+    EXPECT_EQ(true_value, d);
+}
+
 TEST(FddTraverseTest, FddTraverse) {
     fdd::diagram d = fdd::node{
         F<1>() == 1,

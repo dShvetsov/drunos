@@ -64,6 +64,12 @@ private:
     };
 };
 
+struct negation_composition: public boost::static_visitor<diagram>
+{
+    diagram operator()(const leaf& l) const;
+    diagram operator()(const node& n) const;
+};
+
 } // namespace fdd
 } // namespace retic
 } // namespace runos

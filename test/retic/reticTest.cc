@@ -305,6 +305,18 @@ TEST(PolicyTest, IdTest) {
     ));
 }
 
+TEST(PolicyTest, NegTest) {
+    policy p = filter_not(F<1>() == 2) >> modify(F<2>() == 2);
+    oxm::field_set pkt {F<1>() == 1, F<2>() == 1};
+    Applier applier{pkt};
+    boost::apply_visitor(applier, p);
+    auto& results = applier.results();
+    using namespace ::testing;
+    ASSERT_THAT(results, UnorderedElementsAre(
+        Key(ResultOf([](PacketPtr p) {return p->load(F<2>());}, 2))
+    ));
+}
+
 TEST(DISABLED_EqualPolicyTest, ThreeSeq) {
     policy p1 = modify(F<1>() == 1) >> modify(F<2>() == 2) >> id();
     policy p2 = modify(F<2>() == 2) >> id();

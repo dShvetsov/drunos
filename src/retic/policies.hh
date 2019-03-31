@@ -108,6 +108,11 @@ policy filter(oxm::field<> f)
 }
 
 inline
+policy filter_not(oxm::field<>f ) {
+    return Negation{Filter{f}};
+}
+
+inline
 policy handler(std::function<policy(Packet&)> function)
 {
     static uint64_t id_gen = 0;
@@ -134,6 +139,11 @@ inline
 policy operator+(policy lhs, policy rhs)
 {
     return Parallel{lhs, rhs};
+}
+
+inline
+policy operator not(policy pol) {
+    return Negation{pol};
 }
 
 // This is only for purpose that seq operator must have higher priorty that parallel operator
