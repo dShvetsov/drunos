@@ -24,6 +24,7 @@ public:
 class Compiler: public boost::static_visitor<diagram> {
 public:
     diagram operator()(const Filter& fil) const;
+    diagram operator()(const Negation& neg) const;
     diagram operator()(const Modify& mod) const;
     diagram operator()(const Stop& stop) const;
     diagram operator()(const Id& stop) const;

@@ -24,12 +24,17 @@ diagram Compiler::operator()(const Filter& fil) const {
     return node{fil.field, leaf{{oxm::field_set()}}, leaf{}};
 }
 
+diagram Compiler::operator()(const Negation& neg) const {
+    return boost::apply_visitor(*this, id());
+}
+
 diagram Compiler::operator()(const Modify& mod) const {
     return leaf{{oxm::field_set{mod.field}}};
 }
 diagram Compiler::operator()(const Stop& stop) const {
     return leaf{};
 }
+
 diagram Compiler::operator()(const Id& id) const {
     return leaf{{oxm::field_set{}}};
 }

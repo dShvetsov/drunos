@@ -46,6 +46,7 @@ struct FlowSettings {
 struct Sequential;
 struct Parallel;
 struct PacketFunction;
+struct Negation;
 
 using policy =
     boost::variant<
@@ -54,10 +55,15 @@ using policy =
         Filter,
         Modify,
         FlowSettings,
+        boost::recursive_wrapper<Negation>,
         boost::recursive_wrapper<PacketFunction>,
         boost::recursive_wrapper<Sequential>,
         boost::recursive_wrapper<Parallel>
     >;
+
+struct Negation {
+    policy pol;
+};
 
 struct PacketFunction {
     uint64_t id;
@@ -138,73 +144,24 @@ policy operator|(policy lhs, policy rhs)
 }
 
 // Operators
-inline bool operator==(const Stop&, const Stop&) {
-    return true;
-}
+bool operator==(const Stop&, const Stop&);
+bool operator==(const Id&, const Id&);
+bool operator==(const Filter& lhs, const Filter& rhs);
+bool operator==(const Negation& lhs, const Negation& rhs);
+bool operator==(const Modify& lhs, const Modify& rhs);
+bool operator==(const PacketFunction& lhs, const PacketFunction& rhs);
+bool operator==(const Sequential& lhs, const Sequential& rhs);
+bool operator==(const Parallel& lhs, const Parallel& rhs);
+bool operator==(const FlowSettings& lhs, const FlowSettings& rhs);
 
-inline bool operator==(const Id&, const Id&) {
-    return true;
-}
-
-inline bool operator==(const Filter& lhs, const Filter& rhs) {
-    return lhs.field == rhs.field;
-}
-
-inline bool operator==(const Modify& lhs, const Modify& rhs) {
-    return lhs.field == rhs.field;
-}
-
-inline bool operator==(const PacketFunction& lhs, const PacketFunction& rhs) {
-    return lhs.id == rhs.id;
-}
-
-inline bool operator==(const Sequential& lhs, const Sequential& rhs) {
-    return lhs.one == rhs.one && lhs.two == rhs.two;
-}
-
-inline bool operator==(const Parallel& lhs, const Parallel& rhs) {
-    // TODO: this function needs test. A fully test for such cases (a + b + c) == (b + c + a) == (c + b + a) ... etc
-    return (lhs.one == rhs.one && lhs.two == rhs.two) ||
-           (lhs.one == rhs.two && lhs.two == rhs.one);
-}
-
-inline bool operator==(const FlowSettings& lhs, const FlowSettings& rhs) {
-    return lhs.idle_timeout == rhs.idle_timeout && lhs.hard_timeout == rhs.hard_timeout;
-}
-
-inline std::ostream& operator<<(std::ostream& out, const Filter& fil) {
-    return out << "filter( " << fil.field << " )";
-}
-
-inline std::ostream& operator<<(std::ostream& out, const Stop& stop) {
-    return out << "stop";
-}
-
-inline std::ostream& operator<<(std::ostream& out, const Id&) {
-    return out << "id";
-}
-
-inline std::ostream& operator<<(std::ostream& out, const Modify& mod) {
-    return out << "modify( " << mod.field << " )";
-}
-
-inline std::ostream& operator<<(std::ostream& out, const Sequential& seq) {
-    return out << seq.one << " >> " << seq.two;
-}
-
-inline std::ostream& operator<<(std::ostream& out, const Parallel& par) {
-    return out << par.one << " + " << par.two;
-}
-
-inline std::ostream& operator<<(std::ostream& out, const PacketFunction& func) {
-    return out << " function ";
-}
-
-inline std::ostream& operator<<(std::ostream& out, const FlowSettings& flow) {
-    return out 
-        << "{ idle_timeout = " << std::chrono::seconds(flow.idle_timeout).count() << " sec. "
-        << "hard_timeout = " << std::chrono::seconds(flow.hard_timeout).count() << " sec. }";
-}
-
+std::ostream& operator<<(std::ostream& out, const Filter& fil);
+std::ostream& operator<<(std::ostream& out, const Negation& neg);
+std::ostream& operator<<(std::ostream& out, const Stop& stop);
+std::ostream& operator<<(std::ostream& out, const Id&);
+std::ostream& operator<<(std::ostream& out, const Modify& mod);
+std::ostream& operator<<(std::ostream& out, const Sequential& seq);
+std::ostream& operator<<(std::ostream& out, const Parallel& par);
+std::ostream& operator<<(std::ostream& out, const PacketFunction& func);
+std::ostream& operator<<(std::ostream& out, const FlowSettings& flow);
 } // namespace retic
 } // namespace runos

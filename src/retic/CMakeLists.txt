@@ -7,6 +7,7 @@ set(SOURCES
     fdd_translator.hh
     fdd_translator.cc
     policies.hh
+    policies.cc
     fdd_compiler.cc
     fdd_compiler.hh
     traverse_fdd.cc

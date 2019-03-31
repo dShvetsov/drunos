@@ -33,7 +33,7 @@ class Applier : public boost::static_visitor<> {
 
     void operator()(const Filter& fil) {
         for (auto& [pkt, meta] : m_pkts) {
-            if (!pkt->test(fil.field)) {
+            if (!pkt->test(fil.field) xor negation_enabled) {
                 meta.stop();
             }
         }
@@ -56,6 +56,12 @@ class Applier : public boost::static_visitor<> {
         if (not m_pkts.at(0).second.isStopped()) {
             boost::apply_visitor(*this, seq.two);
         }
+    }
+
+    void operator()(const Negation& neg) {
+        negation_enabled = true;
+        boost::apply_visitor(*this, neg.pol);
+        negation_enabled = false;
     }
 
     void operator()(const Id& id) {
@@ -94,7 +100,7 @@ class Applier : public boost::static_visitor<> {
     { return m_pkts; }
 
 private:
-
+    bool negation_enabled = false;
     PacketsWithMeta m_pkts;
 };
 
