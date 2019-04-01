@@ -29,6 +29,9 @@ public:
     const std::string& getMainName() const { return m_main_policy; }
     runos::retic::policy getMainPolicy() const { return m_policies.at(m_main_policy); }
     std::vector<std::string> getPoliciesName() const;
+    const runos::retic::fdd::diagram& getFdd() const {
+        return m_fdd;
+    }
 
     void clearRules();
     void reinstallRules();

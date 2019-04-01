@@ -2,8 +2,10 @@
 #include "Common.hh"
 #include "Retic.hh"
 #include "retic/policies.hh"
+#include "LearningSwitch.hh"
 #include "LinkDiscovery.hh"
 #include "LLDP.hh"
+#include "types/packet_headers.hh"
 
 
 using namespace runos;
@@ -35,8 +37,19 @@ public:
                 filter_not(oxm::eth_type() == LLDP_ETH_TYPE) >> (fwd(1) + fwd(2) + fwd(3))
             )
         );
+        auto learning_switch = LearningSwitch::get(loader);
+        policy ipv6_dropper = not(
+            filter(oxm::eth_type() == 0x86dd)
+        );
+
+        policy lswitch = filter_not(oxm::eth_type() == LLDP_ETH_TYPE) >>
+                         learning_switch->getPolicy();
+
+        retic->registerPolicy("learning-switch",
+            link_discovery->getPolicy() | ipv6_dropper >> lswitch
+        );
     }
 };
 
-REGISTER_APPLICATION(TestApps, {"retic", "link-discovery", ""})
+REGISTER_APPLICATION(TestApps, {"retic", "link-discovery", "learning-switch", ""})
 

@@ -3,7 +3,6 @@ set(CMAKE_AUTOMOC OFF)
 set(SOURCES
     fdd.hh
     applier.hh
-    dumper.hh
     fdd_translator.hh
     fdd_translator.cc
     policies.hh
@@ -22,6 +21,8 @@ set(SOURCES
     trace_tree_translator.hh
     traverse_trace_tree.cc
     traverse_trace_tree.hh
+    dotdumper.cc
+    dotdumper.hh
 )
 
 add_library(runos_retic STATIC ${SOURCES})

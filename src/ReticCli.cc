@@ -1,12 +1,14 @@
 #include "Retic.hh"
 
 #include <sstream>
+#include <fstream>
 #include <boost/lexical_cast.hpp>
 
 #include "Common.hh"
 #include "CommandLine.hh"
 
 #include "retic/policies.hh"
+#include "retic/dotdumper.hh"
 
 using namespace cli;
 using namespace runos;
@@ -25,7 +27,8 @@ public:
             ("policies,p", "Show registered policies")
             ("clear,c", "Clear rules")
             ("reinstall,r", "Reinstall rules of policy")
-            ("set_main,s", options::value<std::string>(), "set main function");
+            ("set_main,s", options::value<std::string>(), "set main function")
+            ("dump", options::value<std::string>(), "dump fdd as dotfile into file");
 
         auto cmd = [app](const options::variables_map& vm, Outside& out) {
             if (not vm["main"].empty()) {
@@ -52,6 +55,12 @@ public:
             if (not vm["set_main"].empty()) {
                 std::string new_main = vm["set_main"].as<std::string>();
                 app->setMain(new_main);
+            }
+            if (not vm["dump"].empty()) {
+                std::string out_file = vm["dump"].as<std::string>();
+                auto& diag = app->getFdd();
+                std::ofstream file(out_file);
+                retic::dumpAsDot(diag, file);
             }
         };
         cli->registerCommand("retic", std::move(desc), std::move(cmd), "Retic commands");
