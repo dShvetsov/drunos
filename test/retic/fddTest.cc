@@ -809,6 +809,22 @@ TEST(FddTraverseTest, FddTraverseWithMaple) {
     EXPECT_EQ(l, fdd::leaf{{ oxm::field_set{F<2>() == 2} }});
 }
 
+TEST(FddTraverseTest, FddTraverseWithMapleCallMeTwice) {
+    int call_count = 0;
+    policy p = handler([&call_count](Packet& pkt) {
+        call_count++;
+        return idle_timeout(duration::zero());
+    });
+
+    oxm::field_set fs{F<1>() == 1};
+    fdd::diagram d = fdd::compile(p);
+    for (int i = 0; i < 2; i++) {
+        fdd::Traverser traverser{fs};
+        boost::apply_visitor(traverser, d);
+    }
+    EXPECT_EQ(call_count, 2);
+}
+
 using match = std::vector<oxm::field_set>;
 
 TEST(FddTraverseTest, FddTraverseWithMapleWithBackend) {
