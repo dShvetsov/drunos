@@ -9,6 +9,10 @@
 namespace runos {
 namespace retic{
 namespace fdd {
+
+// Traverse the tree with packet
+// And augment the TraceTrees with this packet
+// If backend != nullptr -> install the new rules
 class Traverser: public boost::static_visitor<leaf&> {
 public:
     Traverser(const Packet& pkt, Backend* backend = nullptr)

@@ -813,7 +813,7 @@ TEST(FddTraverseTest, FddTraverseWithMapleCallMeTwice) {
     int call_count = 0;
     policy p = handler([&call_count](Packet& pkt) {
         call_count++;
-        return idle_timeout(duration::zero());
+        return hard_timeout(duration::zero());
     });
 
     oxm::field_set fs{F<1>() == 1};
