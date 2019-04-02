@@ -26,16 +26,21 @@ public:
     using value_type = bits<>;
     using mask_type = bits<>;
 
+    typedef std::ostream&(*print_f)(std::ostream&, const value_type&);
+    print_f print = default_print;
+
     constexpr type(uint16_t ns,
                    uint8_t id,
                    bool maskable,
                    uint16_t nbits,
-                   const std::type_info* cpptype = nullptr) noexcept
+                   const std::type_info* cpptype = nullptr,
+                   print_f print = default_print) noexcept
         : _ns{ns}
         , _id{id}
         , _maskable{maskable}
         , _nbits{nbits}
         , _cpptype{cpptype}
+        , print{print}
     { }
 
     constexpr uint16_t ns() const noexcept { return _ns; }
@@ -64,6 +69,10 @@ public:
             return out << boost::core::demangle(t._cpptype->name()) << "{}";
         }
     }
+
+    static std::ostream& default_print(std::ostream& out, const value_type& v) {
+        return out << v;
+    }
 };
 
 template< class Final,
@@ -72,13 +81,14 @@ template< class Final,
           size_t NBITS,
           class ValueType,
           class MaskType = ValueType,
-          bool HASMASK = false >
+          bool HASMASK = false,
+          type::print_f PRINT_F = type::default_print>
 struct define_type : type {
     using value_type = ValueType;
     using mask_type = MaskType;
 
     constexpr define_type()
-        : type{ NS, ID, HASMASK, NBITS, &typeid(Final) }
+        : type{ NS, ID, HASMASK, NBITS, &typeid(Final), PRINT_F }
     { }
 };
 

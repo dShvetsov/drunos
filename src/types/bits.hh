@@ -230,12 +230,32 @@ namespace runos {
     { return from.to_ulong(); }
 
     template<>
+    inline bits<48> bit_cast(uint64_t from)
+    { return bits<48>(from); }
+
+    template<>
     inline bits<64> bit_cast(uint64_t from)
     { return bits<64>(from); }
 
     template<>
     inline uint64_t bit_cast(const bits<64> from)
     { return from.to_ullong(); }
+
+    template<>
+    inline uint8_t bit_cast(const bits<> from)
+    { return from.to_ulong(); }
+
+    template<>
+    inline uint16_t bit_cast(const bits<> from)
+    { return from.to_ulong(); }
+
+    template<>
+    inline uint32_t bit_cast(const bits<> from)
+    { return from.to_ulong(); }
+
+    template<>
+    inline uint64_t bit_cast(const bits<> from)
+    { return bits<64>(from).to_ullong(); }
 
     template<class T>
     T&& bit_cast(T&& from)
