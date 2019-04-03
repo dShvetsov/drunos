@@ -130,33 +130,33 @@ policy hard_timeout(duration time) {
 }
 
 inline
-policy operator>>(policy lhs, policy rhs)
+policy operator>>(const policy& lhs, const policy& rhs)
 {
     return Sequential{lhs, rhs};
 }
 
-inline policy operator>>=(policy lhs, policy rhs)
-{ return lhs >> rhs; }
+inline policy& operator>>=(policy& lhs, const policy& rhs)
+{ return lhs = lhs >> rhs; }
 
 
 policy operator+(policy lhs, policy rhs);
 
-inline policy operator+=(policy lhs, policy rhs)
-{ return lhs + rhs; }
+inline policy& operator+=(policy& lhs, const policy& rhs)
+{ return lhs = lhs + rhs; }
 
 inline
-policy operator not(policy pol) {
+policy operator not(const policy& pol) {
     return Negation{pol};
 }
 
 // This is only for purpose that seq operator must have higher priorty that parallel operator
 inline
-policy operator|(policy lhs, policy rhs)
+policy operator|(const policy& lhs, const policy& rhs)
 {
     return operator+(lhs, rhs);
 }
-inline policy operator|=(policy lhs, policy rhs)
-{ return lhs | rhs; }
+inline policy& operator|=(policy& lhs, const policy& rhs)
+{ return lhs = lhs | rhs; }
 
 // Operators
 bool operator==(const Stop&, const Stop&);
