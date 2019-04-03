@@ -30,7 +30,7 @@ def test_twoports():
     net = Mininet(topo, controller=lambda name: RUNOS(name, profile='twoports'))
     net.start()
     time.sleep(0.5)
-    loss = net.pingAll()
+    loss = net.pingAll(timeout=1)
     net.stop()
     assert loss == 0
 
@@ -40,7 +40,7 @@ def test_twoinports():
     net = Mininet(topo, controller=lambda name: RUNOS(name, profile='twoinports'))
     net.start()
     time.sleep(0.5)
-    loss = net.pingAll()
+    loss = net.pingAll(timeout=1)
     net.stop()
     assert loss == 0
 
@@ -50,7 +50,7 @@ def test_dropall():
     net = Mininet(topo, controller=lambda name: RUNOS(name, profile='dropall'))
     net.start()
     time.sleep(0.5)
-    loss = net.pingAll(timeout=0.1)
+    loss = net.pingAll(timeout=1)
     net.stop()
     assert loss == 100
 
@@ -60,7 +60,7 @@ def test_two_switches():
     net = Mininet(topo, controller=lambda name: RUNOS(name, profile='two_switch'))
     net.start()
     time.sleep(0.5)
-    loss = net.pingAll()
+    loss = net.pingAll(timeout=1)
     net.stop()
     assert loss == 0
 
@@ -74,11 +74,23 @@ def test_functions():
     net.stop()
     assert loss == 0
 
+def test_learning_switch():
+    topo = mininet.topo.LinearTopo(k=4, n=1, sopts={'protocols': 'OpenFlow13'})
+    net = Mininet(topo, controller=lambda name: RUNOS(name, profile='learning_switch'))
+    net.start()
+    time.sleep(0.5)
+    loss = net.pingAll(timeout=1)
+    net.stop()
+    assert loss == 0
+
+
 
 tests = [test_twoports, test_twoinports]
 
 if __name__ == '__main__':
-    switch_test()
     test_twoports()
     test_twoinports()
     test_dropall()
+    test_two_switches()
+    test_functions()
+    test_learning_switch()

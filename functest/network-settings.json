@@ -122,6 +122,34 @@
     "retic": {
         "main": "func"
     }
+},
+
+"learning_switch": {
+    "services": [
+        "retic",
+        "link-discovery",
+        "topology",
+        "learning-switch",
+        "test-apps"
+    ],
+
+    "tables": {
+        "retic" : 0
+    },
+
+    "controller": {
+        "port": 6652,
+         "nthreads": 1,
+         "cbench": false
+    },
+
+    "loader": {
+        "threads": 2
+    },
+
+    "retic": {
+        "main": "learning-switch"
+    }
 }
 
 }
