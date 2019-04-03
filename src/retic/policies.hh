@@ -135,8 +135,14 @@ policy operator>>(policy lhs, policy rhs)
     return Sequential{lhs, rhs};
 }
 
+inline policy operator>>=(policy lhs, policy rhs)
+{ return lhs >> rhs; }
+
 
 policy operator+(policy lhs, policy rhs);
+
+inline policy operator+=(policy lhs, policy rhs)
+{ return lhs + rhs; }
 
 inline
 policy operator not(policy pol) {
@@ -149,6 +155,8 @@ policy operator|(policy lhs, policy rhs)
 {
     return operator+(lhs, rhs);
 }
+inline policy operator|=(policy lhs, policy rhs)
+{ return lhs | rhs; }
 
 // Operators
 bool operator==(const Stop&, const Stop&);
