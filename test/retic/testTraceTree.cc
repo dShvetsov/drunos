@@ -413,8 +413,29 @@ TEST(TraceTreeComplex, GetTracesMergeAndAugmentNestedFunction) {
     EXPECT_EQ(compiled_match, true_compiler_match);
 }
 
-// TODO Test throw exceoption from methods
+TEST(TraceTreeAugmention, SetUpPriorityOfFdd) {
+    MockBackend backend;
 
+    uint16_t prio_of_modify, prio_of_drop;
+
+    EXPECT_CALL(backend, install(
+        oxm::field_set{F<1>() == 1},
+        match{oxm::field_set{F<2>() == 2}},
+        _, _
+    )).WillOnce(SaveArg<2>(&prio_of_modify));
+
+    EXPECT_CALL(backend, install(
+        oxm::field_set{},
+        match{},
+        _, _
+    )).WillOnce(SaveArg<2>(&prio_of_drop));
+
+    trace_tree::node root = trace_tree::unexplored{};
+    trace_tree::Augmention augmenter(&root, &backend, {}, 1, 1000);
+    policy p = filter(F<1>() == 1) >> modify(F<2>() == 2);
+    auto result = augmenter.finish(p);
+    EXPECT_LT(prio_of_drop, prio_of_modify); // prio_of_drop < prio_of_modify
+}
 
 // TODO Test throw exceoption from methods
 
