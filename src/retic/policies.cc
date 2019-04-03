@@ -76,11 +76,33 @@ std::ostream& operator<<(std::ostream& out, const Modify& mod) {
 }
 
 std::ostream& operator<<(std::ostream& out, const Sequential& seq) {
-    return out << seq.one << " >> " << seq.two;
+    auto print = [&out](const policy& p ) {
+        if (boost::get<Parallel>(&p) != nullptr) {
+            // parallel cases. Then wrap into braces
+            out << "(" << p << ")";
+        } else {
+            out << p;
+        }
+    };
+    print(seq.one);
+    out << " >> ";
+    print(seq.two);
+    return out;
 }
 
 std::ostream& operator<<(std::ostream& out, const Parallel& par) {
-    return out << par.one << " + " << par.two;
+    auto print = [&out](const policy& p ) {
+        if (boost::get<Sequential>(&p) != nullptr) {
+            // parallel cases. Then wrap into braces
+            out << "(" << p << ")";
+        } else {
+            out << p;
+        }
+    };
+    print(par.one);
+    out << " + ";
+    print(par.two);
+    return out;
 }
 
 std::ostream& operator<<(std::ostream& out, const PacketFunction& func) {
