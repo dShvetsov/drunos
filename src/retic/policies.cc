@@ -75,9 +75,20 @@ std::ostream& operator<<(std::ostream& out, const PacketFunction& func) {
 }
 
 std::ostream& operator<<(std::ostream& out, const FlowSettings& flow) {
-    return out
-        << "{ idle_timeout = " << std::chrono::seconds(flow.idle_timeout).count() << " sec. "
-        << "hard_timeout = " << std::chrono::seconds(flow.hard_timeout).count() << " sec. }";
+    out << "{";
+    using secs = std::chrono::seconds;
+    if (flow.idle_timeout == duration::max()) {
+        out << "permanent";
+    } else if (flow.hard_timeout == duration::zero() ) {
+        out << "temporal";
+    } else {
+        out << "idle timout=" << secs(flow.idle_timeout).count() << " s.";
+        if (flow.hard_timeout != duration::max()) {
+            out << ", hard_timeout=" << secs(flow.hard_timeout).count() << " s.";
+        }
+    }
+    out << "}";
+    return out;
 }
 
 } // namespace retic

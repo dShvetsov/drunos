@@ -299,7 +299,8 @@ std::ostream& operator<<(std::ostream& out, const leaf& rhs) {
     for (auto& i: rhs.sets) {
         out << "(" << i.pred_actions << ") ";
     }
-    out << " settings= " << rhs.flow_settings << "]";
+    out << "]";
+    out << " settings= " << rhs.flow_settings;
     return out;
 }
 
