@@ -27,7 +27,7 @@ void Retic::init(Loader* loader, const Config& root_config)
     auto ctrl = Controller::get(loader);
 
     ctrl->registerHandler<of13::PacketIn>([=](of13::PacketIn& pi, SwitchConnectionPtr conn) {
-        LOG(INFO) << "PacketIn";
+        DVLOG(10) << "PacketIn";
 
         PacketParser pp{pi, conn->dpid()};
 
