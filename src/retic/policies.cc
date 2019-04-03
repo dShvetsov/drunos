@@ -43,11 +43,11 @@ bool operator==(const FlowSettings& lhs, const FlowSettings& rhs) {
 }
 
 std::ostream& operator<<(std::ostream& out, const Filter& fil) {
-    return out << "filter( " << fil.field << " )";
+    return out << "filter(" << fil.field << ")";
 }
 
 std::ostream& operator<<(std::ostream& out, const Negation& neg) {
-    return out << "not( " << neg.pol << " )";
+    return out << "not(" << neg.pol << ")";
 }
 
 std::ostream& operator<<(std::ostream& out, const Stop& stop) {
@@ -59,7 +59,7 @@ std::ostream& operator<<(std::ostream& out, const Id&) {
 }
 
 std::ostream& operator<<(std::ostream& out, const Modify& mod) {
-    return out << "modify( " << mod.field << " )";
+    return out << "modify(" << mod.field << ")";
 }
 
 std::ostream& operator<<(std::ostream& out, const Sequential& seq) {
@@ -71,7 +71,7 @@ std::ostream& operator<<(std::ostream& out, const Parallel& par) {
 }
 
 std::ostream& operator<<(std::ostream& out, const PacketFunction& func) {
-    return out << " function ";
+    return out << "function id=" << std::hex << func.id;
 }
 
 std::ostream& operator<<(std::ostream& out, const FlowSettings& flow) {

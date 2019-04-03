@@ -290,14 +290,14 @@ bool operator==(const leaf& lhs, const leaf& rhs) {
 }
 
 std::ostream& operator<<(std::ostream& out, const node& rhs) {
-    out << "field " << rhs.field << " ? (" << rhs.positive << ") : (" << rhs.negative << ")";
+    out << "field" << rhs.field << " ? (" << rhs.positive << ") : (" << rhs.negative << ")";
     return out;
 }
 
 std::ostream& operator<<(std::ostream& out, const leaf& rhs) {
-    out << "set_field: [ ";
+    out << "set_field: [";
     for (auto& i: rhs.sets) {
-        out << "(" << i.pred_actions << ") ";
+        out << "(" << i.pred_actions << ")";
     }
     out << "]";
     out << " settings= " << rhs.flow_settings;
