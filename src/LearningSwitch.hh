@@ -16,6 +16,7 @@
 
 #pragma once
 #include "Application.hh"
+#include "STP.hh"
 #include "Loader.hh"
 
 #include "retic/policies.hh"
@@ -27,4 +28,6 @@ public:
     runos::retic::policy getPolicy() const { return m_policy; }
 private:
     runos::retic::policy m_policy;
+    STP* m_stp;
+
 };

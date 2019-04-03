@@ -136,6 +136,28 @@ STPPorts STP::getSTP(uint64_t dpid)
     return sw->getEnabledPorts();
 }
 
+runos::retic::policy STP::broadcastPolicy() const {
+    // TODO: find the way to test this function
+    using namespace runos::retic;
+    static constexpr auto switch_id = oxm::switch_id();
+    static constexpr auto in_port  = oxm::in_port();
+    policy broadcast;
+    for (auto [dpid, sw]: switch_list) {
+        policy on_switch;
+        for (auto in_p: sw->getEnabledPorts()) {
+            policy spawn;
+            for (auto out_p: sw->getEnabledPorts()) {
+                if (out_p != in_p) {
+                    spawn += fwd(out_p);
+                }
+            }
+            on_switch += (filter(in_port == in_p) >> spawn);
+        }
+        broadcast += (filter(switch_id == dpid) >> on_switch);
+    }
+    return broadcast;
+}
+
 void STP::onLinkDiscovered(switch_and_port from, switch_and_port to)
 {
     if (switch_list.count(from.dpid) == 0)

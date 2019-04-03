@@ -41,7 +41,7 @@
 
 
 // REGISTER_APPLICATION(LearningSwitch, {"maple", "topology", "stp", ""})
-REGISTER_APPLICATION(LearningSwitch, {"retic", "topology", /*"stp",*/ ""})
+REGISTER_APPLICATION(LearningSwitch, {"retic", "topology", "stp", ""})
 
 using namespace runos;
 
@@ -166,6 +166,7 @@ void LearningSwitch::init(Loader *loader, const Config &)
 {
     auto topology = Topology::get(loader);
     auto db = std::make_shared<HostsDatabase>();
+    m_stp = STP::get(loader);
 
     const auto ofb_in_port = oxm::in_port();
     const auto ofb_eth_src = oxm::eth_src();
@@ -260,13 +261,10 @@ void LearningSwitch::init(Loader *loader, const Config &)
                 if (not is_broadcast(dst_mac)) {
                     // TODO: unhardcode
                     return idle_timeout(std::chrono::seconds::zero()) >> (
-                        filter(ofb_in_port == 1) >> (fwd(2) | fwd(3)) |
-                        filter(ofb_in_port == 2) >> (fwd(1) | fwd(3)) |
-                        filter(ofb_in_port == 3) >> (fwd(1) | fwd(2)) );
+                        m_stp->broadcastPolicy()
+                    );
                 }
-                return filter(ofb_in_port == 1) >> (fwd(2) | fwd(3)) |
-                       filter(ofb_in_port == 2) >> (fwd(1) | fwd(3)) |
-                       filter(ofb_in_port == 3) >> (fwd(1) | fwd(2)) ;
+                return m_stp->broadcastPolicy() ;
             }
     });
 

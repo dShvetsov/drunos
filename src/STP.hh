@@ -22,6 +22,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "retic/policies.hh"
+
 #include "Common.hh"
 #include "Application.hh"
 #include "Loader.hh"
@@ -99,6 +101,8 @@ public:
             FLOOD_GROUP = 0xf100d
         };
     };
+
+    runos::retic::policy broadcastPolicy() const;
 
     void init(Loader* loader, const Config& config) override;
 /**
