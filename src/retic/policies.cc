@@ -1,7 +1,20 @@
 #include "policies.hh"
 
+#include <boost/variant/static_visitor.hpp>
+
 namespace runos {
 namespace retic {
+
+policy operator+(policy lhs, policy rhs)
+{
+    if (boost::get<Stop>(&lhs) != nullptr) {
+        return rhs; // just ignore left stop policy
+    } else if (boost::get<Stop>(&rhs) != nullptr) {
+        return lhs; // just ignore right stop polisy
+    } else {
+        return Parallel{lhs, rhs};
+    }
+}
 
 // Operators
 bool operator==(const Stop&, const Stop&) {

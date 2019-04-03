@@ -135,11 +135,8 @@ policy operator>>(policy lhs, policy rhs)
     return Sequential{lhs, rhs};
 }
 
-inline
-policy operator+(policy lhs, policy rhs)
-{
-    return Parallel{lhs, rhs};
-}
+
+policy operator+(policy lhs, policy rhs);
 
 inline
 policy operator not(policy pol) {
@@ -150,7 +147,7 @@ policy operator not(policy pol) {
 inline
 policy operator|(policy lhs, policy rhs)
 {
-    return Parallel{lhs, rhs};
+    return operator+(lhs, rhs);
 }
 
 // Operators
