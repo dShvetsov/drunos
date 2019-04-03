@@ -228,7 +228,7 @@ void LearningSwitch::init(Loader *loader, const Config &)
             auto tpkt = packet_cast<TraceablePacket>(pkt);
             ethaddr dst_mac = pkt.load(ofb_eth_dst);
 
-            ethaddr src_mac = tpkt.watch(ofb_eth_src);
+            ethaddr src_mac = pkt.load(ofb_eth_src);
             uint64_t dpid = tpkt.watch(switch_id);
             uint32_t inport = tpkt.watch(ofb_in_port);
 
