@@ -224,10 +224,15 @@ void LearningSwitch::init(Loader *loader, const Config &)
 //    });
     auto retic = Retic::get(loader);
     using namespace retic;
-    m_policy = handler([=](Packet& pkt) {
+    m_policy = handler([=](Packet& pkt) { // else then use learning switch
             // Get required fields
             auto tpkt = packet_cast<TraceablePacket>(pkt);
             ethaddr dst_mac = pkt.load(ofb_eth_dst);
+
+            if (is_broadcast(dst_mac)) {
+                LOG(INFO) << "Capture the broadcast packet. Install broadcast rules";
+                return m_stp->broadcastPolicy();
+            }
 
             ethaddr src_mac = pkt.load(ofb_eth_src);
             uint64_t dpid = tpkt.watch(switch_id);
@@ -264,6 +269,7 @@ void LearningSwitch::init(Loader *loader, const Config &)
                         m_stp->broadcastPolicy()
                     );
                 }
+                LOG(WARNING) << "Capture the broadcast packet. Will be broadcasted";
                 return m_stp->broadcastPolicy() ;
             }
     });
