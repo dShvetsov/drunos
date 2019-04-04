@@ -149,6 +149,11 @@ policy operator not(const policy& pol) {
     return Negation{pol};
 }
 
+inline 
+policy if_then_else(oxm::field<> f, const policy& positive, const policy& negative) {
+    return (filter(f) >> positive) + (filter_not(f) >> negative);
+}
+
 // This is only for purpose that seq operator must have higher priorty that parallel operator
 inline
 policy operator|(const policy& lhs, const policy& rhs)
