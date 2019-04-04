@@ -13,15 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "Common.hh"
-#include "Flow.hh"
 #include <fstream>
 #include <sstream>
-#include "json11.hpp"
-#include "SwitchConnection.hh"
+#include <iostream>
 
+#include <boost/program_options.hpp>
+
+#include "json11.hpp"
+
+#include "Common.hh"
+#include "Config.hh"
+#include "Flow.hh"
 #include "Loader.hh"
+#include "SwitchConnection.hh"
 
 using namespace json11;
 
@@ -62,11 +66,25 @@ int main(int argc, char* argv[]) {
 
     QCoreApplication app(argc, argv);
 
+    namespace po = boost::program_options;
+
     std::string configFile = "network-settings.json";
-    if (argc == 2) {
-        configFile = argv[1];
+    std::string profile = "default";
+
+    po::options_description desc("RUNOS options");
+    desc.add_options()
+        ("help,h", "Show help and exit")
+        ("config,c", po::value<std::string>(&configFile)->default_value("network-settings.json"), "Set a settings file")
+        ("profile,f", po::value<std::string>(&profile)->default_value("default"), "Set a profile of setting file");
+    po::variables_map vm;
+    po::parsed_options parsed = po::command_line_parser(argc, argv).options(desc).allow_unregistered().run();
+    po::store(parsed, vm);
+    po::notify(vm);
+    if (vm.count("help")) {
+        std::cout << desc;
+        return 0;
     }
-    Config config = loadConfig(configFile, "default");
+    Config config = loadConfig(configFile, profile);
 
     Loader loader(config);
     loader.startAll();

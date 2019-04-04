@@ -5,6 +5,7 @@ set(SOURCES
     exception.cc
     IPv6Addr.cc
     ipv4addr.cc
+    printers.cc
 )
 
 add_library(runos_types STATIC ${SOURCES})

@@ -18,6 +18,7 @@
 
 #include <exception>
 #include <type_traits>
+#include <memory>
 
 #include <boost/assert.hpp>
 
@@ -99,6 +100,8 @@ public:
     friend typename std::enable_if<std::is_lvalue_reference<T>::value, T>::type
     packet_cast(Packet& pkt);
 
+    virtual std::unique_ptr<Packet> clone() const = 0;
+
 protected:
     virtual Packet& next_wrapper() noexcept
     { return *this; }
@@ -166,6 +169,9 @@ public:
 
     void modify(oxm::field<> patch) override
     { pkt.modify(patch); }
+
+    std::unique_ptr<Packet> clone() const override 
+    { return pkt.clone(); }
 };
 
 } // namespace runos

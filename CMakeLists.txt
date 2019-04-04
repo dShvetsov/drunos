@@ -4,13 +4,14 @@ project(runos)
 
 include(third_party/configure.cmake)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_FLAGS "-g -Wall")
 
 # Locally installed libraries
 find_package(Qt5Core)
 find_package(Qt5Network)
 find_package(Boost REQUIRED COMPONENTS
-    system thread unit_test_framework coroutine context)
+    system thread unit_test_framework coroutine context program_options)
 find_package(PkgConfig)
 pkg_check_modules(GLOG REQUIRED libglog)
 
@@ -30,3 +31,4 @@ link_directories(
 add_subdirectory(src)
 add_subdirectory(web)
 add_subdirectory(test)
+add_subdirectory(third_party/googletest)

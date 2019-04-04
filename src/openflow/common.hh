@@ -85,7 +85,8 @@ enum class basic_match_fields : uint8_t {
 
 /*OXM match field for non openflow class.  Runos only*/
 enum class non_openflow_fields : uint8_t {
-    SWITCH_ID = 1
+    SWITCH_ID = 1,
+    OUT_PORT = 2
 };
 
 struct header {

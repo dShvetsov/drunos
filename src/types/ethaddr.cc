@@ -138,7 +138,7 @@ std::istream& operator>>(std::istream& in, ethaddr& addr)
     if (s) try {
         in.read(buf, mac_str_size - 1);
         addr = ethaddr(buf);
-    } catch (ethaddr::bad_representation) {
+    } catch (ethaddr::bad_representation&) {
         in.setstate(std::ios::failbit);
     }
 

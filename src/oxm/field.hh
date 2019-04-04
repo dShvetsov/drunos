@@ -260,7 +260,8 @@ struct value<type> : detail::type_holder<type>
 
     friend std::ostream& operator<<(std::ostream& out, value<class type> val)
     {
-        return out << val.m_type << " == " << val.m_value;
+        out << val.m_type << " == ";
+        return val.type().print(out, val.m_value);
     }
 };
 
@@ -480,8 +481,8 @@ struct field<type> : detail::type_holder<type>
     friend std::ostream& operator<<(std::ostream& out, field<class type> f)
     {
         if (f.fuzzy()) {
-            return out << "(" << mask<class type>(f) << ")" << " == "
-                       << f.m_value;
+            out << "(" << mask<class type>(f) << ")" << " == ";
+            return f.type().print(out, f.m_value);
         } else {
             return out << value<class type>(f);
         }

@@ -1,5 +1,21 @@
 add_subdirectory(types)
 add_subdirectory(maple)
+add_subdirectory(retic)
+
+set(TESTABLE_SOURCES
+    Application.cc
+    Loader.cc
+    OFMsgUnion.cc
+    OFTransaction.cc
+    FluidOXMAdapter.cc
+    SwitchConnection.cc
+    PacketParser.cc
+    Controller.cc
+    Retic.cc
+    OFDriver.hh
+    OFDriver.cc
+    json11.cpp
+)
 
 set(SOURCES
     # Core
@@ -18,18 +34,24 @@ set(SOURCES
     Topology.cc
     STP.cc
     Maple.cc
+    CommandLine.cc
+    Retic.cc
+    OFDriver.hh
+    OFDriver.cc
     # Apps
     SimpleLearningSwitch.cc
     LearningSwitch.cc
     CBench.cc
     Stats.cc
+    DropAll.cc
+    NoMapleRules.cc
 #ArpHandler.cc
+    StaticFlowPusher.hh
     StaticFlowPusher.cc
     RestMultipart.cc
     RestFlowMod.cc
     RestStringProcessing.cc
     # Loader
-    Main.cc
     # REST
     RestListener.cc
     Event.cc
@@ -39,6 +61,10 @@ set(SOURCES
     FlowManager.cc
     # Json
     json11.cpp
+    SwitchCli.cc
+    ReticCli.cc
+    # funcs test
+    TestApps.cc
 )
 
 add_definitions(
@@ -52,16 +78,25 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/third_party/webserver
 )
 
-add_executable(runos ${SOURCES})
+add_library(runos_base STATIC ${TESTABLE_SOURCES})
+
+target_link_libraries(runos_base
+        Qt5::Core)
+
+add_executable(runos Main.cc ${SOURCES})
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
 target_link_libraries(runos
+# runos_base
     runos_types
     runos_maple
+    runos_retic
     tcmalloc
     Qt5::Core
     fluid_base
     libfluid_msg.a
+    edit
+    fmt
     ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
     ${Boost_COROUTINE_LIBRARY}
     ${GLOG_LIBRARIES}
@@ -69,5 +104,4 @@ target_link_libraries(runos
     ${Boost_THREAD_LIBRARY}
     ${Boost_LIBRARIES}
     pthread
-
 )

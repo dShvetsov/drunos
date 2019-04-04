@@ -1,0 +1,155 @@
+{
+
+"twoports": {
+    "services": [
+        "retic",
+        "test-apps"
+    ],
+
+    "tables": {
+        "retic" : 0
+    },
+
+    "controller": {
+        "port": 6652,
+         "nthreads": 1,
+         "cbench": false
+    },
+
+    "loader": {
+        "threads": 2
+    },
+
+    "retic": {
+        "main": "twoports"
+    }
+},
+
+"twoinports": {
+    "services": [
+        "retic",
+        "test-apps"
+    ],
+
+    "tables": {
+        "retic" : 0
+    },
+
+    "controller": {
+        "port": 6652,
+         "nthreads": 1,
+         "cbench": false
+    },
+
+    "loader": {
+        "threads": 2
+    },
+
+    "retic": {
+        "main": "twoinports"
+    }
+},
+"dropall": {
+    "services": [
+        "retic",
+        "test-apps"
+    ],
+
+    "tables": {
+        "retic" : 0
+    },
+
+    "controller": {
+        "port": 6652,
+         "nthreads": 1,
+         "cbench": false
+    },
+
+    "loader": {
+        "threads": 2
+    },
+
+    "retic": {
+        "main": "dropall"
+    }
+},
+"two_switch": {
+    "services": [
+        "retic",
+        "test-apps"
+    ],
+
+    "tables": {
+        "retic" : 0
+    },
+
+    "controller": {
+        "port": 6652,
+         "nthreads": 1,
+         "cbench": false
+    },
+
+    "loader": {
+        "threads": 2
+    },
+
+    "retic": {
+        "main": "two_switch"
+    }
+},
+
+"func": {
+    "services": [
+        "retic",
+        "retic-cli",
+        "test-apps"
+    ],
+
+    "tables": {
+        "retic" : 0
+    },
+
+    "controller": {
+        "port": 6652,
+         "nthreads": 1,
+         "cbench": false
+    },
+
+    "loader": {
+        "threads": 2
+    },
+
+    "retic": {
+        "main": "func"
+    }
+},
+
+"learning_switch": {
+    "services": [
+        "retic",
+        "link-discovery",
+        "topology",
+        "learning-switch",
+        "test-apps"
+    ],
+
+    "tables": {
+        "retic" : 0
+    },
+
+    "controller": {
+        "port": 6652,
+         "nthreads": 1,
+         "cbench": false
+    },
+
+    "loader": {
+        "threads": 2
+    },
+
+    "retic": {
+        "main": "learning-switch"
+    }
+}
+
+}

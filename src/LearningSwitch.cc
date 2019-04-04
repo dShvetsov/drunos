@@ -28,6 +28,8 @@
 #include "types/ethaddr.hh"
 #include "oxm/openflow_basic.hh"
 
+#include "retic/policies.hh"
+
 #include "Topology.hh"
 #include "SwitchConnection.hh"
 #include "Flow.hh"
@@ -35,12 +37,15 @@
 #include "Maple.hh"
 #include "Decision.hh"
 #include "Common.hh"
+#include "Retic.hh"
 
 
-REGISTER_APPLICATION(LearningSwitch, {"maple", "topology", "stp", ""})
+// REGISTER_APPLICATION(LearningSwitch, {"maple", "topology", "stp", ""})
+REGISTER_APPLICATION(LearningSwitch, {"retic", "topology", "stp", ""})
 
 using namespace runos;
 
+// pure maple route
 class Route : public Decision::CustomDecision {
     struct Ports {
         uint32_t inport;
@@ -93,6 +98,30 @@ public:
 
 };
 
+retic::policy route_policy(data_link_route route) {
+    using namespace retic;
+
+    const auto in_port = oxm::in_port();
+    const auto switch_id = oxm::switch_id();
+
+    if (route.size() % 2 != 0){
+        RUNOS_THROW( invalid_argument() );
+    }
+
+    policy p;
+    for (auto it = route.begin(); it != route.end(); it += 2){
+        if (it->dpid != (it+1)->dpid){
+            RUNOS_THROW( invalid_argument() );
+        }
+        uint32_t inport = it->port;
+        uint32_t outport = (it+1)->port;
+        p = p + (filter(switch_id == it->dpid) >>
+                 filter(in_port == inport) >>
+                 fwd(outport));
+    }
+    return p;
+}
+
 class HostsDatabase {
     boost::shared_mutex mutex;
     std::unordered_map<ethaddr, switch_and_port> db;
@@ -137,26 +166,75 @@ void LearningSwitch::init(Loader *loader, const Config &)
 {
     auto topology = Topology::get(loader);
     auto db = std::make_shared<HostsDatabase>();
+    m_stp = STP::get(loader);
 
     const auto ofb_in_port = oxm::in_port();
     const auto ofb_eth_src = oxm::eth_src();
     const auto ofb_eth_dst = oxm::eth_dst();
     const auto switch_id = oxm::switch_id();
 
-    auto maple = Maple::get(loader);
-
-    maple->registerHandler("forwarding",
-        [=](Packet& pkt, FlowPtr, Decision decision) {
+        // TODO: enable maple driven
+//    auto maple = Maple::get(loader);
+//
+//    maple->registerHandler("forwarding",
+//        [=](Packet& pkt, FlowPtr, Decision decision) {
+//            // Get required fields
+//            auto tpkt = packet_cast<TraceablePacket>(pkt);
+//            ethaddr dst_mac = pkt.load(ofb_eth_dst);
+//            ethaddr src_mac = tpkt.watch(ofb_eth_src);
+//            uint64_t dpid;
+//            uint32_t inport;
+//            std::tie(dpid, inport) = tpkt.vload(switch_id, ofb_in_port);
+//
+//            db->learn(dpid,
+//                      tpkt.watch(ofb_in_port),
+//                      src_mac);
+//
+//            auto target = db->query(dst_mac);
+//            auto source = db->query(src_mac);
+//
+//            // Forward
+//            if (target) {
+//                auto route = topology
+//                             ->computeRoute(source->dpid, target->dpid);
+//                if (not route.empty() or target->dpid == source->dpid){
+//                    route.insert(route.begin(), *source);
+//                    route.push_back(*target);
+//                    DVLOG(10) << "Forwarding packet from " << source->dpid
+//                              << "to " << target->dpid << " through route : "
+//                              << route;
+//                    return decision.custom(
+//                            Decision::CustomDecisionPtr(new Route(route)))
+//                            .idle_timeout(std::chrono::seconds(20*60))
+//                            .hard_timeout(std::chrono::minutes(30));
+//                } else {
+//                    LOG(WARNING)
+//                        << "Path from " << source->dpid
+//                        << "to " << target->dpid << "not found";
+//                    return decision.drop();
+//                }
+//            } else {
+//                if (not is_broadcast(dst_mac)) {
+//                    VLOG(5) << "Flooding for unknown address " << dst_mac;
+//                    return decision.custom(std::make_shared<STP::Decision>())
+//                            .idle_timeout(std::chrono::seconds::zero());
+//                }
+//                return decision.custom(std::make_shared<STP::Decision>());
+//            }
+//    });
+    auto retic = Retic::get(loader);
+    using namespace retic;
+    m_policy = handler([=](Packet& pkt) {
             // Get required fields
             auto tpkt = packet_cast<TraceablePacket>(pkt);
             ethaddr dst_mac = pkt.load(ofb_eth_dst);
-            ethaddr src_mac = tpkt.watch(ofb_eth_src);
-            uint64_t dpid;
-            uint32_t inport;
-            std::tie(dpid, inport) = tpkt.vload(switch_id, ofb_in_port);
+
+            ethaddr src_mac = pkt.load(ofb_eth_src);
+            uint64_t dpid = tpkt.watch(switch_id);
+            uint32_t inport = tpkt.watch(ofb_in_port);
 
             db->learn(dpid,
-                      tpkt.watch(ofb_in_port),
+                      inport,
                       src_mac);
 
             auto target = db->query(dst_mac);
@@ -172,23 +250,23 @@ void LearningSwitch::init(Loader *loader, const Config &)
                     DVLOG(10) << "Forwarding packet from " << source->dpid
                               << "to " << target->dpid << " through route : "
                               << route;
-                    return decision.custom(
-                            Decision::CustomDecisionPtr(new Route(route)))
-                            .idle_timeout(std::chrono::seconds(20*60))
-                            .hard_timeout(std::chrono::minutes(30));
+                    return route_policy(route);
                 } else {
                     LOG(WARNING)
                         << "Path from " << source->dpid
                         << "to " << target->dpid << "not found";
-                    return decision.drop();
+                    return stop();
                 }
             } else {
                 if (not is_broadcast(dst_mac)) {
-                    VLOG(5) << "Flooding for unknown address " << dst_mac;
-                    return decision.custom(std::make_shared<STP::Decision>())
-                            .idle_timeout(std::chrono::seconds::zero());
+                    // TODO: unhardcode
+                    return idle_timeout(std::chrono::seconds::zero()) >> (
+                        m_stp->broadcastPolicy()
+                    );
                 }
-                return decision.custom(std::make_shared<STP::Decision>());
+                return m_stp->broadcastPolicy() ;
             }
     });
+
+    retic->registerPolicy("forwarding", m_policy);
 }
