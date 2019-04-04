@@ -27,22 +27,26 @@ void Retic::init(Loader* loader, const Config& root_config)
     auto ctrl = Controller::get(loader);
 
     ctrl->registerHandler<of13::PacketIn>([=](of13::PacketIn& pi, SwitchConnectionPtr conn) {
-        DVLOG(10) << "PacketIn";
+        try {
+            DVLOG(10) << "PacketIn";
 
-        PacketParser pp{pi, conn->dpid()};
+            PacketParser pp{pi, conn->dpid()};
 
-        retic::fdd::Traverser traverser(pp, m_backend.get());
-        auto& leaf = boost::apply_visitor(traverser, m_fdd);
+            retic::fdd::Traverser traverser(pp, m_backend.get());
+            auto& leaf = boost::apply_visitor(traverser, m_fdd);
 
-        std::vector<oxm::field_set> sets;
-        sets.reserve(sets.size());
-        for (auto& s: leaf.sets) {
-            if (s.body.has_value()) {
-                throw std::runtime_error("There must not be leaf with handler");
+            std::vector<oxm::field_set> sets;
+            sets.reserve(sets.size());
+            for (auto& s: leaf.sets) {
+                if (s.body.has_value()) {
+                    throw std::runtime_error("There must not be leaf with handler");
+                }
+                sets.push_back(s.pred_actions);
             }
-            sets.push_back(s.pred_actions);
+            m_backend->packetOuts(static_cast<uint8_t*>(pi.data()), pi.data_len(), sets, conn->dpid());
+        } catch (std::exception& e) {
+            LOG(ERROR) << "Error in retic packetin handler: " << e.what();
         }
-        m_backend->packetOuts(static_cast<uint8_t*>(pi.data()), pi.data_len(), sets, conn->dpid());
     });
 
     m_table = ctrl->getTable("retic");
