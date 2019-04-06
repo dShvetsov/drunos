@@ -74,8 +74,8 @@ public:
         constexpr uint16_t ipv4 = 0x0800;
         return if_then_else(eth_type == ipv4,
                 //then
-                    filter_not(ip_dst == "10.0.0.1") >>
-                    filter_not(ip_dst == "10.0.0.2"),
+                    filter_not(ip_dst == "10.0.0.2") >>
+                    filter_not(ip_dst == "10.0.0.3"),
                 //else
                     id()
                 );
