@@ -150,6 +150,36 @@
     "retic": {
         "main": "learning-switch"
     }
+},
+
+"running_example": {
+    "services": [
+        "retic",
+        "link-discovery",
+        "topology",
+        "learning-switch",
+        "retic-cli",
+        "test-apps"
+    ],
+
+    "tables": {
+        "retic" : 0
+    },
+
+    "controller": {
+        "port": 6652,
+         "nthreads": 1,
+         "cbench": false
+    },
+
+    "loader": {
+        "threads": 2
+    },
+
+    "retic": {
+        "main": "test-policy",
+        "pin-to-thread": 1
+    }
 }
 
 }
