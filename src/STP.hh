@@ -72,6 +72,7 @@ public:
     void updateGroup();
 
     STPPorts getEnabledPorts();
+    STPPorts getDisabledPorts();
 private:
     void clearGroup();
     void installGroup();
@@ -112,6 +113,7 @@ public:
  * @return Ports
  */
     STPPorts getSTP(uint64_t dpid);
+    STPPorts getDisabledPorts(uint64_t dpid);
 
 protected slots:
     void onLinkDiscovered(switch_and_port from, switch_and_port to);

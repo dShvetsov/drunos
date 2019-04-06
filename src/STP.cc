@@ -48,6 +48,17 @@ STPPorts SwitchSTP::getEnabledPorts()
     return result;
 }
 
+STPPorts SwitchSTP::getDisabledPorts()
+{
+    STPPorts result;
+
+    for (auto port : ports) {
+        if (not port.second->broadcast)
+            result.push_back(port.second->port_no);
+    }
+    return result;
+}
+
 void SwitchSTP::updateGroup()
 {
     of13::GroupMod gm;
@@ -134,6 +145,16 @@ STPPorts STP::getSTP(uint64_t dpid)
 
     SwitchSTP* sw = switch_list[dpid];
     return sw->getEnabledPorts();
+}
+
+STPPorts STP::getDisabledPorts(uint64_t dpid)
+{
+    if (switch_list.count(dpid) == 0 or not computed) {
+        return {};
+    }
+
+    SwitchSTP* sw = switch_list[dpid];
+    return sw->getDisabledPorts();
 }
 
 runos::retic::policy STP::broadcastPolicy() const {
