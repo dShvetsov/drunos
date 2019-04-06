@@ -38,7 +38,7 @@ def run_mininet(*args, **kwargs):
     try:
         net = Mininet(*args, **kwargs)
         net.start()
-        time.sleep(4) # give controller time to start
+        time.sleep(15) # give controller time to start
         yield net
     finally:
         net.stop()
@@ -46,7 +46,7 @@ def run_mininet(*args, **kwargs):
 
 def run_example():
     topo = mininet.topo.LinearTopo(k=4, n=1, sopts={'protocols': 'OpenFlow13'})
-    with run_mininet(topo, controller=profiled_runos('running_example')) as net:
+    with run_mininet(topo, autoStaticArp=True, controller=profiled_runos('running_example')) as net:
         loss = net.pingAll(timeout=1)
 
 
