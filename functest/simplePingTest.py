@@ -111,7 +111,8 @@ def test_topology():
 def test_learning_switch():
     topo = mininet.topo.LinearTopo(k=4, n=1, sopts={'protocols': 'OpenFlow13'})
     with run_mininet(topo, controller=profiled_runos('learning_switch')) as net:
-        loss = net.pingAll(timeout=1)
+        time.sleep(3) # Additional time to setting up controller
+        loss = net.pingAll()
         assert loss == 0
 
 
@@ -123,5 +124,5 @@ if __name__ == '__main__':
 #    test_dropall()
 #    test_two_switches()
 #    test_functions()
-    test_topology()
-#    test_learning_switch()
+#    test_topology()
+    test_learning_switch()
