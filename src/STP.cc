@@ -48,6 +48,17 @@ STPPorts SwitchSTP::getEnabledPorts()
     return result;
 }
 
+STPPorts SwitchSTP::getDisabledPorts()
+{
+    STPPorts result;
+
+    for (auto port : ports) {
+        if (not port.second->broadcast)
+            result.push_back(port.second->port_no);
+    }
+    return result;
+}
+
 void SwitchSTP::updateGroup()
 {
     of13::GroupMod gm;
@@ -136,6 +147,16 @@ STPPorts STP::getSTP(uint64_t dpid)
     return sw->getEnabledPorts();
 }
 
+STPPorts STP::getDisabledPorts(uint64_t dpid)
+{
+    if (switch_list.count(dpid) == 0 or not computed) {
+        return {};
+    }
+
+    SwitchSTP* sw = switch_list[dpid];
+    return sw->getDisabledPorts();
+}
+
 runos::retic::policy STP::broadcastPolicy() const {
     // TODO: find the way to test this function
     using namespace runos::retic;
@@ -152,9 +173,12 @@ runos::retic::policy STP::broadcastPolicy() const {
                 }
             }
             on_switch += (filter(in_port == in_p) >> spawn);
+            VLOG(35) << "Spawn on " << dpid << ":" << in_p << " :" << spawn;
         }
+        VLOG(30) << "Broadcast policy on " << dpid << " is " << on_switch;
         broadcast += (filter(switch_id == dpid) >> on_switch);
     }
+    VLOG(20) << "Broadcast policy is :" << broadcast;
     return broadcast;
 }
 
@@ -251,7 +275,7 @@ void STP::computeSpanningTree()
     // clear spanning tree before new computing
 
     if (not computed){
-        VLOG(20) << "Compute spanning tree";
+        VLOG(5) << "Compute spanning tree";
         compute_mutex.lock();
 
         // all switch-switch ports are not broadcast
