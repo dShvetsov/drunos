@@ -20,6 +20,7 @@ REGISTER_APPLICATION(Retic, {"controller", ""})
 using namespace runos;
 
 using secs = std::chrono::seconds;
+#define GUARD(x) std::lock_guard<std::mutex> guard(x);
 
 void Retic::init(Loader* loader, const Config& root_config)
 {
@@ -28,6 +29,7 @@ void Retic::init(Loader* loader, const Config& root_config)
 
     ctrl->registerHandler<of13::PacketIn>([=](of13::PacketIn& pi, SwitchConnectionPtr conn) {
         try {
+            GUARD(m_lock);
             DVLOG(10) << "PacketIn";
 
             PacketParser pp{pi, conn->dpid()};
@@ -74,6 +76,7 @@ void Retic::registerPolicy(std::string name, retic::policy policy) {
 }
 
 void Retic::onSwitchUp(SwitchConnectionPtr conn, of13::FeaturesReply fr) {
+    GUARD(m_lock);
     m_backend = nullptr;
     m_drivers[conn->dpid()] = makeDriver(conn);
     this->reinstallRules();
@@ -160,7 +163,12 @@ void Of13Backend::installBarrier(oxm::field_set match, uint16_t prio) {
 
 void Of13Backend::packetOuts(uint8_t* data, size_t data_len, std::vector<oxm::field_set> actions, uint64_t dpid) {
     static const auto ofb_out_port = oxm::out_port();
-    auto driver = m_drivers.at(dpid);
+    auto driver_it = m_drivers.find(dpid);
+    if (driver_it == m_drivers.end()) {
+        LOG(ERROR) << "Could'n send packet out on 0x" << std::hex << dpid << ". No found driver";
+        return;
+    }
+    auto driver = driver_it->second;
     if (actions.empty()) {
         return;
     }

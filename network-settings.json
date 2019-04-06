@@ -19,7 +19,8 @@
     ],
 
     "retic":  {
-        "main": "learning-switch"
+        "main": "test-policy",
+        "pin-to-thread": 1
     },
 
     "tables": {

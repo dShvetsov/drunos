@@ -4,6 +4,7 @@
 #include <memory>
 #include <variant>
 #include <vector>
+#include <mutex>
 
 #include "Application.hh"
 #include "Loader.hh"
@@ -41,6 +42,7 @@ public slots:
     void onSwitchUp(runos::SwitchConnectionPtr conn, fluid_msg::of13::FeaturesReply fr);
 
 private:
+    std::mutex m_lock; // TODO: more efficient way, instead of mutex everywhere
     std::unordered_map<std::string, runos::retic::policy> m_policies;
     runos::retic::fdd::diagram m_fdd;
     std::string m_main_policy;

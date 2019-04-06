@@ -31,6 +31,10 @@ public:
         // TODO: make it withou dynamic_cast
         auto link_discovery = dynamic_cast<LinkDiscovery*> (LinkDiscovery::get(loader));
 
+        if (link_discovery == nullptr) {
+            LOG(ERROR) << "Link discoery accidently is nullptr";
+        }
+
         retic->registerPolicy("with_link_discovery",
             link_discovery->getPolicy() +
             (
@@ -42,12 +46,67 @@ public:
             filter(oxm::eth_type() == 0x86dd)
         );
 
+        policy not_lldp = filter_not(oxm::eth_type() == LLDP_ETH_TYPE);
+
         policy lswitch = filter_not(oxm::eth_type() == LLDP_ETH_TYPE) >>
                          learning_switch->getPolicy();
 
         retic->registerPolicy("learning-switch",
             link_discovery->getPolicy() | ipv6_dropper >> lswitch
         );
+
+        retic->registerPolicy("test-policy",
+            link_discovery->getPolicy() |
+            not_lldp >> firewall() >> learning_switch->getPolicy());
+    }
+
+    policy basic_firewall() {
+        static constexpr auto eth_src = oxm::eth_src();
+        static constexpr auto eth_type = oxm::eth_type();
+        constexpr uint16_t ipv6 = 0x86dd;
+        return filter_not(eth_src == "ff:ff:ff:ff:ff:ff") >>
+               filter_not(eth_type == ipv6);
+    }
+
+    policy bad_ip_reciever() {
+        static constexpr auto eth_type = oxm::eth_type();
+        static constexpr auto ip_dst = oxm::ipv4_dst();
+        constexpr uint16_t ipv4 = 0x0800;
+        return if_then_else(eth_type == ipv4,
+                //then
+                    filter_not(ip_dst == "10.0.0.1") >>
+                    filter_not(ip_dst == "10.0.0.2"),
+                //else
+                    id()
+                );
+    }
+
+    policy bad_tcp() {
+        static constexpr auto eth_type = oxm::eth_type();
+        static constexpr auto port = oxm::tcp_dst();
+        static constexpr auto ip_proto = oxm::ip_proto();
+        constexpr uint16_t ipv4 = 0x0800;
+        constexpr uint8_t tcp = 0x06;
+        return if_then_else(eth_type == ipv4,
+                // then
+                   if_then_else(ip_proto == tcp,
+                    // then
+                        filter_not(port == 2220) >>
+                        filter_not(port == 2221) >>
+                        filter_not(port == 2222) >>
+                        filter_not(port == 2223) >>
+                        filter_not(port == 2224),
+                    // else
+                        id()
+                    ),
+                //else
+                   id()
+                );
+    }
+
+    policy firewall() {
+        // return basic_firewall() >> bad_ip_reciever() >> bad_tcp();
+        return basic_firewall() >> bad_ip_reciever() >> bad_tcp();
     }
 };
 
