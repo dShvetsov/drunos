@@ -38,7 +38,7 @@ def run_mininet(*args, **kwargs):
     try:
         net = Mininet(*args, **kwargs)
         net.start()
-        time.sleep(15) # give controller time to start
+        time.sleep(5) # give controller time to start
         yield net
     finally:
         net.stop()
