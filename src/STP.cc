@@ -173,9 +173,12 @@ runos::retic::policy STP::broadcastPolicy() const {
                 }
             }
             on_switch += (filter(in_port == in_p) >> spawn);
+            VLOG(35) << "Spawn on " << dpid << ":" << in_p << " :" << spawn;
         }
+        VLOG(30) << "Broadcast policy on " << dpid << " is " << on_switch;
         broadcast += (filter(switch_id == dpid) >> on_switch);
     }
+    VLOG(20) << "Broadcast policy is :" << broadcast;
     return broadcast;
 }
 
@@ -272,7 +275,7 @@ void STP::computeSpanningTree()
     // clear spanning tree before new computing
 
     if (not computed){
-        VLOG(20) << "Compute spanning tree";
+        VLOG(5) << "Compute spanning tree";
         compute_mutex.lock();
 
         // all switch-switch ports are not broadcast
