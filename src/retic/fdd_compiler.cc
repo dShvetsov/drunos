@@ -83,6 +83,22 @@ diagram parallel_composition::operator()(const leaf& lhs, const node& rhs) const
 }
 
 diagram parallel_composition::operator()(const node& lhs, const node& rhs) const {
+
+    // The original paper of fdd compilation has a mistake
+    // Becouse we need to go down on negative field, while we not reach another type node
+    // or leaf node
+    // For more detail you can see: https://github.com/dShvetsov/drunos/issues/18
+    // And see FddCompilerTest.Broadcast test in test/retic/fddTest.cc
+    // TODO: make more efficient (return by reference)
+    struct next_type_negative : boost::static_visitor<diagram> {
+        next_type_negative(oxm::type t) : m_t(t) { }
+        oxm::type m_t;
+        diagram operator()(const leaf& l) const { return l; }
+        diagram operator()(const node& n) const {
+            return n.field.type() == m_t ? boost::apply_visitor(*this, n.negative) : n;
+        }
+    };
+
     if (lhs.field == rhs.field) {
         diagram positive = boost::apply_visitor(
             *this, diagram(lhs.positive), diagram(rhs.positive)
@@ -93,8 +109,12 @@ diagram parallel_composition::operator()(const node& lhs, const node& rhs) const
         return node{lhs.field, positive, negative};
     } else if (lhs.field.type() == rhs.field.type()) {
         if (lhs.field.value_bits() < rhs.field.value_bits()) {
+            auto negative_node = boost::apply_visitor(
+                next_type_negative(lhs.field.type()),
+                rhs.negative
+            );
             diagram positive = boost::apply_visitor(
-                *this, diagram(lhs.positive), diagram(rhs.negative)
+                *this, diagram(lhs.positive), negative_node
             );
             diagram negative = boost::apply_visitor(
                 *this, diagram(lhs.negative), diagram(rhs)
