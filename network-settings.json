@@ -8,6 +8,7 @@
         "static-flow-pusher",
         "switch-stats",
         "stp",
+        "stp-cli",
         "flow-manager",
         "rest-multipart",
         "command-line-interface",
