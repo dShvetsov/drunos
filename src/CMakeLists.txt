@@ -63,6 +63,7 @@ set(SOURCES
     json11.cpp
     SwitchCli.cc
     ReticCli.cc
+    STPCli.cc
     # funcs test
     TestApps.cc
 )
