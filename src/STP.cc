@@ -232,6 +232,9 @@ void STP::onSwitchDiscovered(Switch* dp)
     switch_list[dp->id()] = sw;
 
     connect(dp, &Switch::portUp, this, &STP::onPortUp);
+    for (auto port: dp->ports()) {
+        onPortUp(dp, port);
+    }
 }
 
 void STP::onSwitchDown(Switch* dp)
@@ -249,6 +252,9 @@ void STP::onSwitchUp(Switch* dp)
         SwitchSTP* sw = new SwitchSTP(dp, this);
         switch_list[dp->id()] = sw;
         connect(dp, &Switch::portUp, this, &STP::onPortUp);
+        for (auto port: dp->ports()) {
+            onPortUp(dp, port);
+        }
     }
 }
 
