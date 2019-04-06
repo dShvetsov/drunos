@@ -159,6 +159,8 @@
         "topology",
         "learning-switch",
         "retic-cli",
+        "stp-cli",
+        "switch-manager-cli",
         "test-apps"
     ],
 
