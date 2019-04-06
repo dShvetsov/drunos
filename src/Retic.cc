@@ -202,7 +202,8 @@ void Of13Backend::install_on(
 
     if (actions.empty()) {
         // drop packet
-        driver->installRule(match, prio, {}, m_table);
+        auto flow = driver->installRule(match, prio, {}, m_table);
+        m_storage.push_back(flow);
         return;
     } 
     std::vector<Actions> buckets;
