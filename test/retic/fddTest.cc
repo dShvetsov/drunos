@@ -894,11 +894,10 @@ TEST(FddTraverseTest, FddTraverseWithMapleWithBackendNestedFunction) {
     EXPECT_EQ(l, fdd::leaf{{ oxm::field_set{F<2>() == 2} }});
 }
 
-TEST(DISABLED_FddCompilerTest, Broadcast) {
+TEST(FddCompilerTest, Broadcast) {
     static constexpr auto switch_id = oxm::switch_id();
     policy p = (filter(switch_id == 2) >> stop()) +
                (filter(switch_id == 3) >> stop()) +
-               (filter(switch_id == 4) >> stop()) +
                (filter(switch_id == 1) >> stop());
     fdd::diagram true_value = fdd::node{
         switch_id == 1,
@@ -909,11 +908,7 @@ TEST(DISABLED_FddCompilerTest, Broadcast) {
             fdd::node{
                 switch_id == 3,
                 fdd::leaf{},
-                fdd::node{
-                    switch_id == 4,
-                    fdd::leaf{},
-                    fdd::leaf{}
-                }
+                fdd::leaf{}
             }
         }
     };
