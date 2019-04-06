@@ -116,11 +116,28 @@ def deadlined_iperf(net, port, timeout=5):
     t.join()
 
 
+def run_snooping(net):
+    files = []
+    messages = [
+        'OFPT_FLOW_MOD',
+        'OFPT_PACKET_IN',
+        'dl_type=0x88cc',
+        'OFPT_PACKET_OUT',
+        'OFPT_FLOW_REMOVED',
+        'OFPT_GROUP_MOD',
+    ]
+    for sw in net.switches:
+        filename = "snoop_{}.dmp".format(sw.dpid)
+        j.dpctl('snoop', '2>&1 >/dev/null | grep -E "{}"'.format("|".join(messages)))
+        files.append(filename)
+    return files
+
+
 def run_example():
     topo = mininet.topo.LinearTopo(k=4, n=1, sopts={'protocols': 'OpenFlow13'})
     with run_mininet(topo, autoStaticArp=True, controller=profiled_runos('running_example')) as net:
-        # loss = net.pingAll(timeout=1)
-        # net.iperf(seconds=1, port=3000) # pass
+        loss = net.pingAll(timeout=1)
+        net.iperf(seconds=1, port=3000) # pass
         for port in range(2220, 2225):
             try:
                 net.timeout_iperf(l4Type='UDP', port=port, seconds=1)
