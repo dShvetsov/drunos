@@ -83,13 +83,14 @@ public:
 
     policy bad_tcp() {
         static constexpr auto eth_type = oxm::eth_type();
-        static constexpr auto port = oxm::tcp_dst();
+        static constexpr auto port = oxm::udp_dst();
         static constexpr auto ip_proto = oxm::ip_proto();
         constexpr uint16_t ipv4 = 0x0800;
-        constexpr uint8_t tcp = 0x06;
+        // constexpr uint8_t tcp = 0x06;
+        constexpr uint8_t udp = 0x11;
         return if_then_else(eth_type == ipv4,
                 // then
-                   if_then_else(ip_proto == tcp,
+                   if_then_else(ip_proto == udp,
                     // then
                         filter_not(port == 2220) >>
                         filter_not(port == 2221) >>
