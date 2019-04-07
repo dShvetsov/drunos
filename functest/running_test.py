@@ -1,4 +1,5 @@
 import requests
+import sys
 import os
 import time
 import re
@@ -9,6 +10,7 @@ from collections import defaultdict
 
 from mininet.net import Mininet
 from mininet.util import dumpNodeConnections
+from mininet.moduledeps import moduleDeps, pathCheck, TUN
 from mininet.node import Controller
 import mininet.topo
 
@@ -71,7 +73,7 @@ def timeout_iperf( self, hosts=None, l4Type='TCP', udpBw='10M', fmt=None,
 Mininet.timeout_iperf = timeout_iperf
 
 
-class RUNOS(Controller):
+class dRUNOS(Controller):
     def __init__(
             self,
             name,
@@ -90,8 +92,47 @@ class RUNOS(Controller):
         )
 
 
-def profiled_runos(profile):
-    return lambda name: RUNOS(name, profile=profile)
+class RUNOS(Controller):
+    """ original runos """
+    def __init__(
+            self,
+            name,
+            settings='network-settings-maple.json',
+            port=6652,
+            **kwargs
+    ):
+        """
+        WATNING: Be aware, that settings file must starts with number of port!
+        default: 6652_network-settings.json
+        Yeah this is hack, but the easiest way to connect mininet script and RUNOS
+        """
+        Controller.__init__(
+            self,
+            name,
+            port=port,
+            command='orig_runos',
+            cargs=settings,
+            **kwargs
+        )
+
+    def start( self ):
+        """
+        Mininet forces to put port in cargs string. Hate it
+        """
+        pathCheck( self.command )
+        cout = '/tmp/' + self.name + '.log'
+        if self.cdir is not None:
+            self.cmd( 'cd ' + self.cdir )
+        self.cmd( self.command + ' ' + self.cargs +
+                  ' 1>' + cout + ' 2>' + cout + ' &' )
+        self.execed = False
+
+
+def profiled_drunos(profile):
+    return lambda name: dRUNOS(name, profile=profile)
+
+def runos(name):
+    return RUNOS(name)
 
 
 @contextmanager
@@ -174,7 +215,7 @@ def parse_snoop_files(files, messages):
 
 
 
-def run_example(topo, prefix):
+def run_example(topo, prefix, controller):
     try:
         topo.dsh_name
     except AttributeError:
@@ -189,7 +230,7 @@ def run_example(topo, prefix):
         'OFPT_FLOW_REMOVED',
         'OFPT_GROUP_MOD',
     ]
-    with run_mininet(topo, autoStaticArp=True, controller=profiled_runos('running_example')) as net:
+    with run_mininet(topo, autoStaticArp=True, controller=controller) as net:
         print("start: {}: nodes {}, hosts {}".format(topo.dsh_name, len(topo.nodes()), len(topo.hosts())))
         files = run_snooping(net, messages)
         print("Snooping started")
@@ -215,5 +256,9 @@ def run_example(topo, prefix):
 if __name__ == '__main__':
     topo = mininet.topo.LinearTopo(k=4, n=1, sopts={'protocols': 'OpenFlow13'})
     topo.dsh_name = 'Linear'
-    run_example(topo, 'script_test')
+    if sys.argv[1] == 'drunos':
+        run_example(topo, prefix='drunos_result', controller=profiled_drunos('running_example'))
+    elif sys.argv[1] == 'maple':
+        run_example(topo, prefix='maple_result', controller=runos)
+
 
