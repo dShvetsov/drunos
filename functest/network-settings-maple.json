@@ -4,31 +4,16 @@
     "services": [
         "learning-switch",
         "link-discovery",
-        "rest-listener",
         "host-manager",
-        "webui",
-        "static-flow-pusher",
-        "switch-stats",
+        "firewall",
         "stp",
-        "flow-manager",
-        "rest-multipart",
-        "rest-flowmod",
         "maple"
     ],
 
     "tables": {
-        "static-flow-pusher" : 0,
-        "maple" : 1
+        "maple" : 0
     },
 
-    "flow-manager" : {
-        "interval" : 5
-    },
-
-    "rest-listener" : {
-         "port" : 8000,
-         "web-dir" : "./build/web"
-    },
 
     "controller": {
          "nthreads": 1,
@@ -39,6 +24,7 @@
     "maple": {
           "pipeline": [
              "link-discovery",
+             "firewall",
              "host-manager",
              "forwarding"
          ]
