@@ -1,9 +1,11 @@
 import requests
+import os
 import time
 import re
-import simplejson
+import simplejson as json
 import threading
 from contextlib import contextmanager
+from collections import defaultdict
 
 from mininet.net import Mininet
 from mininet.util import dumpNodeConnections
@@ -56,7 +58,7 @@ def timeout_iperf( self, hosts=None, l4Type='TCP', udpBw='10M', fmt=None,
     while len( re.findall( '/sec', servout ) ) < count:
         if time.time() - start_time > timeout:
             break
-        servout += server.monitor( timeoutms=5000 )
+        servout += server.monitor( timeoutms=1000 )
     server.sendInt()
     servout += server.waitOutput()
     debug( 'Server output: %s\n' % servout )
@@ -101,7 +103,33 @@ def run_mininet(*args, **kwargs):
         time.sleep(1) # give controller time to start
         yield net
     finally:
-        net.stop()
+        try:
+            net.stop()
+        except Exception as e:
+            print('Unexpecting error: {}'.format(e))
+            print('Call the clear mininet')
+            os.system('mn -c')
+
+
+class SmartSum(object):
+    def __init__(self, first, second):
+        self.trigged = False
+        self.first = first
+        self.second = second
+
+    def __call__(self, text):
+        def helper(line):
+            if self.trigged and line.count(self.second) > 0:
+                self.trigged = False
+                return 1
+            if line.count(self.first) > 0 :
+                self.trigged = True
+            else :
+                self.trigged = False
+            return 0
+
+        ret =  reduce(lambda x,y : x + helper(y), text.split('\n'), 0)
+        return ret
 
 
 def deadlined_iperf(net, port, timeout=5):
@@ -116,8 +144,43 @@ def deadlined_iperf(net, port, timeout=5):
     t.join()
 
 
-def run_snooping(net):
+def run_snooping(net, messages):
     files = []
+    for sw in net.switches:
+        filename = "snoop_{}.dmp".format(sw.dpid)
+
+        # running snoop in daemon (&) output in filename
+        out_cmd = '> {} &'.format(filename)
+
+        # Since snoop print in stderr, mode stderr to stoud, and stdout to deb null
+        # Grep by needed strings
+        sw.dpctl('snoop', '2>&1 >/dev/null | grep -E "{}" {}'.format("|".join(messages), out_cmd))
+        files.append(filename)
+    return files
+
+
+def parse_snoop_files(files, messages):
+    ret = defaultdict(lambda: 0)
+    lldp_packet_ins = SmartSum("OFPT_PACKET_IN", "dl_type=0x88cc")
+    lldp_packet_outs = SmartSum("OFPT_PACKET_OUT", "dl_type=0x88cc")
+    for filename in files:
+        with open(filename) as f:
+            for line in f:
+                for msg in messages:
+                    ret[msg] += line.count(msg)
+                ret['lldp_packet_ins'] += lldp_packet_ins(line)
+                ret['lldp_packet_outs'] += lldp_packet_outs(line)
+    return ret
+
+
+
+def run_example(topo, prefix):
+    try:
+        topo.dsh_name
+    except AttributeError:
+        print("Topo has no dsh_name")
+        raise
+
     messages = [
         'OFPT_FLOW_MOD',
         'OFPT_PACKET_IN',
@@ -126,16 +189,11 @@ def run_snooping(net):
         'OFPT_FLOW_REMOVED',
         'OFPT_GROUP_MOD',
     ]
-    for sw in net.switches:
-        filename = "snoop_{}.dmp".format(sw.dpid)
-        j.dpctl('snoop', '2>&1 >/dev/null | grep -E "{}"'.format("|".join(messages)))
-        files.append(filename)
-    return files
-
-
-def run_example():
-    topo = mininet.topo.LinearTopo(k=4, n=1, sopts={'protocols': 'OpenFlow13'})
     with run_mininet(topo, autoStaticArp=True, controller=profiled_runos('running_example')) as net:
+        print("start: {}: nodes {}, hosts {}".format(topo.dsh_name, len(topo.nodes()), len(topo.hosts())))
+        files = run_snooping(net, messages)
+        print("Snooping started")
+        start_time = time.time()
         loss = net.pingAll(timeout=1)
         net.iperf(seconds=1, port=3000) # pass
         for port in range(2220, 2225):
@@ -143,8 +201,19 @@ def run_example():
                 net.timeout_iperf(l4Type='UDP', port=port, seconds=1)
             except Exception as e:
                 print(e)
+        result = parse_snoop_files(files, messages)
+        result['loss'] = loss
+        result['hosts'] = len(topo.hosts())
+        result['nodes'] = len(topo.nodes())
+        result['topo'] = topo.dsh_name
+        print(result)
+        with open("{}_{}_{}.json".format(prefix, topo.dsh_name, len(topo.nodes())), 'a') as f:
+            json.dump(result, f)
 
 
 
 if __name__ == '__main__':
-    run_example()
+    topo = mininet.topo.LinearTopo(k=4, n=1, sopts={'protocols': 'OpenFlow13'})
+    topo.dsh_name = 'Linear'
+    run_example(topo, 'script_test')
+
