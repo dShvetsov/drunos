@@ -1,12 +1,8 @@
 #!/usr/bin/env python
 
-import requests
 import sys
 import os
 import time
-import re
-import simplejson as json
-import threading
 from contextlib import contextmanager
 from collections import defaultdict
 
@@ -94,6 +90,7 @@ class dRUNOS(Controller):
         )
 
 
+
 class RUNOS(Controller):
     """ original runos """
     def __init__(
@@ -119,15 +116,61 @@ class RUNOS(Controller):
 
     def start( self ):
         """
-        Mininet forces to put port in cargs string. Hate it
+        mininet forces to put port in cargs string. hate it
         """
-        pathCheck( self.command )
+        pathcheck( self.command )
         cout = '/tmp/' + self.name + '.log'
-        if self.cdir is not None:
+        if self.cdir is not none:
             self.cmd( 'cd ' + self.cdir )
         self.cmd( self.command + ' ' + self.cargs +
                   ' 1>' + cout + ' 2>' + cout + ' &' )
-        self.execed = False
+        self.execed = false
+
+
+class FRENETIC(Controller):
+    def __init__(
+            self,
+            name,
+            port=6652,
+            **kwargs
+    ):
+        Controller.__init__(
+            self,
+            name,
+            port=port,
+            command='frenetic',
+            cargs='http-controller --openflow-port %s',
+            **kwargs)
+
+
+class FreneticApplication(Controller):
+    """ Use frenetic python application as controller """
+    def __init__(
+        self,
+        name,
+        script,
+        **kwargs
+    ):
+        Controller.__init__(
+            self,
+            name,
+            command='python',
+            port=9999,
+            cargs='{}'.format(script),
+            **kwargs
+        )
+
+    def start( self ):
+        """
+        mininet forces to put port in cargs string. hate it
+        """
+        pathcheck( self.command )
+        cout = '/tmp/' + self.name + '.log'
+        if self.cdir is not none:
+            self.cmd( 'cd ' + self.cdir )
+        self.cmd( self.command + ' ' + self.cargs +
+                  ' 1>' + cout + ' 2>' + cout + ' &' )
+        self.execed = false
 
 
 def profiled_drunos(profile):
@@ -135,6 +178,9 @@ def profiled_drunos(profile):
 
 def runos(name):
     return RUNOS(name)
+
+def frenetic(script):
+    return [lambda name: FRENETIC(name), lambda name: FreneticApplication(name, script=script)]
 
 
 @contextmanager
@@ -256,11 +302,16 @@ def run_example(topo, prefix, controller):
 
 
 if __name__ == '__main__':
-    topo = mininet.topo.LinearTopo(k=4, n=1, sopts={'protocols': 'OpenFlow13'})
-    topo.dsh_name = 'Linear'
-    if sys.argv[1] == 'drunos':
-        run_example(topo, prefix='drunos_result', controller=profiled_drunos('running_example'))
-    elif sys.argv[1] == 'maple':
-        run_example(topo, prefix='maple_result', controller=runos)
+    if sys.argv[1] == 'frenetic':
+        topo = mininet.topo.LinearTopo(k=4, n=1, sopts={'protocols': 'OpenFlow10'})
+        topo.dsh_name = 'Linear'
+        run_example(topo, prefix='frenetic_result', controller=frenetic('learning_switch.py'))
+    else:
+        topo = mininet.topo.LinearTopo(k=4, n=1, sopts={'protocols': 'OpenFlow13'})
+        topo.dsh_name = 'Linear'
+        if sys.argv[1] == 'drunos':
+            run_example(topo, prefix='drunos_result', controller=profiled_drunos('running_example'))
+        elif sys.argv[1] == 'maple':
+            run_example(topo, prefix='maple_result', controller=runos)
 
 
