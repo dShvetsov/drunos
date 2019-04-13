@@ -45,7 +45,7 @@ public:
 
         static const std::vector<oxm::field<>> bad_ip = {
             ip_dst == "10.0.0.2",
-            ip_dst == "10.0.0.3'"
+            ip_dst == "10.0.0.3"
         };
         static const std::vector<oxm::field<>> bad_udp = {
             port == 2220,
@@ -55,7 +55,7 @@ public:
             port == 2224
         };
 
-        maple->registerHandler("drop-all",
+        maple->registerHandler("firewall",
             [=](Packet& pkt, FlowPtr, Decision decision) {
                 if (pkt.test(eth_src == broadcast) ||
                     pkt.test(eth_type == ipv6)) {
