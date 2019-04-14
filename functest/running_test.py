@@ -2,9 +2,11 @@
 
 import sys
 import os
+import re
 import time
 from contextlib import contextmanager
 from collections import defaultdict
+import simplejson as json
 
 from mininet.net import Mininet
 from mininet.util import dumpNodeConnections
@@ -118,13 +120,13 @@ class RUNOS(Controller):
         """
         mininet forces to put port in cargs string. hate it
         """
-        pathcheck( self.command )
+        pathCheck( self.command )
         cout = '/tmp/' + self.name + '.log'
-        if self.cdir is not none:
+        if self.cdir is not None:
             self.cmd( 'cd ' + self.cdir )
         self.cmd( self.command + ' ' + self.cargs +
                   ' 1>' + cout + ' 2>' + cout + ' &' )
-        self.execed = false
+        self.execed = False
 
 
 class FRENETIC(Controller):
@@ -164,13 +166,13 @@ class FreneticApplication(Controller):
         """
         mininet forces to put port in cargs string. hate it
         """
-        pathcheck( self.command )
+        pathCheck( self.command )
         cout = '/tmp/' + self.name + '.log'
-        if self.cdir is not none:
+        if self.cdir is not None:
             self.cmd( 'cd ' + self.cdir )
         self.cmd( self.command + ' ' + self.cargs +
                   ' 1>' + cout + ' 2>' + cout + ' &' )
-        self.execed = false
+        self.execed = False
 
 
 def profiled_drunos(profile):
@@ -247,6 +249,14 @@ def run_snooping(net, messages):
         files.append(filename)
     return files
 
+def count_flows(net):
+    ret = 0
+    for sw in net.switches:
+        ftable = sw.dpctl('dump-flows')
+        print (ftable)
+        ret += len(ftable.split('\n'))
+    return ret
+
 
 def parse_snoop_files(files, messages):
     ret = defaultdict(lambda: 0)
@@ -282,6 +292,8 @@ def run_example(topo, prefix, controller):
         print("start: {}: nodes {}, hosts {}".format(topo.dsh_name, len(topo.nodes()), len(topo.hosts())))
         files = run_snooping(net, messages)
         print("Snooping started")
+        proactive_count = count_flows(net)
+        print("Proactive flows: {}".format(proactive_count))
         start_time = time.time()
         loss = net.pingAll(timeout=1)
         net.iperf(seconds=1, port=3000) # pass
@@ -295,17 +307,27 @@ def run_example(topo, prefix, controller):
         result['hosts'] = len(topo.hosts())
         result['nodes'] = len(topo.nodes())
         result['topo'] = topo.dsh_name
+        result['proactive_count'] = proactive_count
         print(result)
-        with open("{}_{}_{}.json".format(prefix, topo.dsh_name, len(topo.nodes())), 'a') as f:
-            json.dump(result, f)
+        result_fule = '{}.json'.format(prefix)
+        data = []
+        try:
+            with open(result_fule, 'r') as f:
+                data = json.load(f)
+        except:
+            # if file is not exist
+            pass
 
+        data.append(result)
+        with open(result_fule, 'w') as f:
+            json.dump(data, f)
 
 
 if __name__ == '__main__':
     if sys.argv[1] == 'frenetic':
         topo = mininet.topo.LinearTopo(k=4, n=1, sopts={'protocols': 'OpenFlow10'})
         topo.dsh_name = 'Linear'
-        run_example(topo, prefix='frenetic_result', controller=frenetic('learning_switch.py'))
+        run_example(topo, prefix='frenetic_result', controller=frenetic('firwall_learning.py'))
     else:
         topo = mininet.topo.LinearTopo(k=4, n=1, sopts={'protocols': 'OpenFlow13'})
         topo.dsh_name = 'Linear'
