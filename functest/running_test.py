@@ -238,7 +238,7 @@ def deadlined_iperf(net, port, timeout=5):
 def run_snooping(net, messages):
     files = []
     for sw in net.switches:
-        filename = "snoop_{}.dmp".format(sw.dpid)
+        filename = "/tmp/snoop_{}.dmp".format(sw.dpid)
 
         # running snoop in daemon (&) output in filename
         out_cmd = '> {} &'.format(filename)
@@ -253,7 +253,6 @@ def count_flows(net):
     ret = 0
     for sw in net.switches:
         ftable = sw.dpctl('dump-flows')
-        print (ftable)
         ret += len(ftable.split('\n'))
     return ret
 
@@ -324,16 +323,22 @@ def run_example(topo, prefix, controller):
 
 
 if __name__ == '__main__':
+    try:
+        sys.argv[1]
+    except IndexError:
+        print("Specify the test: frenetic, drunos or maple")
+        sys.exit(1)
+
     if sys.argv[1] == 'frenetic':
         topo = mininet.topo.LinearTopo(k=4, n=1, sopts={'protocols': 'OpenFlow10'})
         topo.dsh_name = 'Linear'
-        run_example(topo, prefix='frenetic_result', controller=frenetic('firwall_learning.py'))
+        run_example(topo, prefix='results/frenetic_result', controller=frenetic('firwall_learning.py'))
     else:
         topo = mininet.topo.LinearTopo(k=4, n=1, sopts={'protocols': 'OpenFlow13'})
         topo.dsh_name = 'Linear'
         if sys.argv[1] == 'drunos':
-            run_example(topo, prefix='drunos_result', controller=profiled_drunos('running_example'))
+            run_example(topo, prefix='results/drunos_result', controller=profiled_drunos('running_example'))
         elif sys.argv[1] == 'maple':
-            run_example(topo, prefix='maple_result', controller=runos)
+            run_example(topo, prefix='results/maple_result', controller=runos)
 
 
