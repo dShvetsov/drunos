@@ -14,6 +14,8 @@ from mininet.moduledeps import moduleDeps, pathCheck, TUN
 from mininet.node import Controller
 import mininet.topo
 
+import tree_topo
+
 
 from mininet.log import info, error, debug, output, warn
 def timeout_iperf( self, hosts=None, l4Type='TCP', udpBw='10M', fmt=None,
@@ -52,7 +54,7 @@ def timeout_iperf( self, hosts=None, l4Type='TCP', udpBw='10M', fmt=None,
                              % port )
     cliout = client.cmd( iperfArgs + '-t %d -c ' % seconds +
                          server.IP() + ' ' + bwArgs )
-    debug( 'Client output: %s\n' % cliout )
+    output( 'Client output: %s\n' % cliout )
     servout = ''
     # We want the last *b/sec from the iperf server output
     # for TCP, there are two of them because of waitListening
@@ -60,10 +62,10 @@ def timeout_iperf( self, hosts=None, l4Type='TCP', udpBw='10M', fmt=None,
     while len( re.findall( '/sec', servout ) ) < count:
         if time.time() - start_time > timeout:
             break
-        servout += server.monitor( timeoutms=1000 )
+        servout += server.monitor( timeoutms=500 )
     server.sendInt()
     servout += server.waitOutput()
-    debug( 'Server output: %s\n' % servout )
+    output( 'Server output: %s\n' % servout )
     result = [ self._parseIperf( servout ), self._parseIperf( cliout ) ]
     if l4Type == 'UDP':
         result.insert( 0, udpBw )
@@ -200,6 +202,7 @@ def run_mininet(*args, **kwargs):
             print('Unexpecting error: {}'.format(e))
             print('Call the clear mininet')
             os.system('mn -c')
+            raise
 
 
 class SmartSum(object):
@@ -298,9 +301,10 @@ def run_example(topo, prefix, controller):
         net.iperf(seconds=1, port=3000) # pass
         for port in range(2220, 2225):
             try:
-                net.timeout_iperf(l4Type='UDP', port=port, seconds=1)
+                net.timeout_iperf(l4Type='UDP', port=port, seconds=1, timeout=2)
             except Exception as e:
                 print(e)
+                raise
         result = parse_snoop_files(files, messages)
         result['loss'] = loss
         result['hosts'] = len(topo.hosts())
@@ -319,7 +323,21 @@ def run_example(topo, prefix, controller):
 
         data.append(result)
         with open(result_fule, 'w') as f:
-            json.dump(data, f)
+            json.dump(data, f, sort_keys=True, indent=4*' ')
+
+def dispatch_test_type(test_type, sopts, min_k, max_k):
+    assert max_k >= 4
+    max_k += 1
+    if test_type == 'linear':
+        gen_topo = (mininet.topo.LinearTopo(k=k, n=1,sopts=sopts) for k in range(min_k, max_k))
+    elif test_type == 'single':
+        gen_topo = (mininet.topo.SingleSwitchTopo(k=k,sopts=sopts) for k in range(min_k, max_k))
+    elif test_type == 'tree':
+        gen_topo = (tree_topo.BinTreeTopo(n=k,sopts=sopts) for k in range(min_k, max_k))
+
+    for t in gen_topo:
+        t.dsh_name = test_type
+        yield t
 
 
 if __name__ == '__main__':
@@ -329,16 +347,37 @@ if __name__ == '__main__':
         print("Specify the test: frenetic, drunos or maple")
         sys.exit(1)
 
+    result_file = 'results/result_' + sys.argv[1]
     if sys.argv[1] == 'frenetic':
-        topo = mininet.topo.LinearTopo(k=4, n=1, sopts={'protocols': 'OpenFlow10'})
-        topo.dsh_name = 'Linear'
-        run_example(topo, prefix='results/frenetic_result', controller=frenetic('firwall_learning.py'))
+        sopts = {'protocols': 'OpenFlow10'}
+        controller = frenetic('firwall_learning.py')
     else:
-        topo = mininet.topo.LinearTopo(k=4, n=1, sopts={'protocols': 'OpenFlow13'})
-        topo.dsh_name = 'Linear'
+        sopts = {'protocols': 'OpenFlow13'}
         if sys.argv[1] == 'drunos':
-            run_example(topo, prefix='results/drunos_result', controller=profiled_drunos('running_example'))
+            controller = profiled_drunos('running_example')
         elif sys.argv[1] == 'maple':
-            run_example(topo, prefix='results/maple_result', controller=runos)
+            controller = runos
 
+    try:
+        test_type = sys.argv[2]
+    except IndexError:
+        print ("Not specified test type. Used default: Linear")
+        test_type = 'Linear'
 
+    try:
+        max_k = int(sys.argv[3])
+    except IndexError:
+        print ("Max k not specified. Use 4")
+        max_k = 4
+
+    try:
+        min_k = int(sys.argv[4])
+    except IndexError:
+        min_k = 4
+
+    for topo in dispatch_test_type(test_type, sopts, min_k, max_k):
+        try:
+            run_example(topo, prefix=result_file, controller=controller)
+        except KeyboardInterrupt:
+            if 'y' not in input("Continue?").lower():
+                raise
