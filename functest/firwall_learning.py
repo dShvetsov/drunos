@@ -57,30 +57,48 @@ def switch_policy(sw):
     # print "Unknown pred: ", unknown_pred.to_json()
     # print "Controller: ", controller().to_json()
     # print "Flood(sw): ", flood(sw).to_json()
-    return known_pol | Filter(unknown_pred) >> (SendToController("learning_controller") | flood(sw))
+    return known_pol | (Filter(unknown_pred) >> (SendToController("learning_controller") | flood(sw)))
+
+def basic_firewall():
+    ipv6 = 0x86dd
+    return Filter(EthSrcNotEq("ff:ff:ff:ff:ff:ff") & EthTypeNotEq(ipv6))
+
+def bad_ip_reciever():
+    ipv4 = 0x0800
+    return IfThenElse(
+        EthTypeEq(ipv4),
+        Filter(IP4DstNotEq("10.0.0.2") & IP4DstNotEq("10.0.0.3")),
+        id
+    )
+
+def bad_tcp():
+    ipv4 = 0x0800
+    udp = 0x11
+    return IfThenElse(
+        EthTypeEq(ipv4) & IPProtoEq(udp),
+        Filter(
+            TCPDstPortEq(2220) &
+            TCPDstPortEq(2221) &
+            TCPDstPortEq(2222) &
+            TCPDstPortEq(2223) &
+            TCPDstPortEq(2224)
+        ),
+        id
+    )
+
+def firewall():
+    return basic_firewall() >> bad_ip_reciever() >> bad_tcp()
+
 
 def policy():
     #for sw in topo.keys():
     #    print "switch_policy: ", switch_policy(sw).to_json()
     print("Enable switch policy")
-    pr = Or([EthSrcEq("00:00:00:00:00:01"),
-        EthDstEq("00:00:00:00:00:01"),
-        EthTypeEq(0x800) & IP4SrcEq("10.0.0.2"),
-        EthTypeEq(0x800) & IPProtoEq(17) & IP4SrcEq("10.0.0.3"),
-        EthSrcEq("00:00:00:00:00:03") & EthDstEq("00:00:00:00:00:02")])
-    assert isinstance(pr, Pred)
-    dr = drop
-    assert isinstance(dr, Policy)
-    assert isinstance(Union(switch_policy(sw) for sw in topo.keys()), Policy)
-    return IfThenElse(
-               Or([EthSrcEq("00:00:00:00:00:01"),
-                   EthDstEq("00:00:00:00:00:01"),
-                   EthTypeEq(0x800) & IP4SrcEq("10.0.0.2"),
-                   EthTypeEq(0x800) & IPProtoEq(17) & IP4SrcEq("10.0.0.3"),
-                   EthSrcEq("00:00:00:00:00:03") & EthDstEq("00:00:00:00:00:02")]),
-                   drop,
-                   Union(switch_policy(sw) for sw in topo.keys())
-               )
+    forwarding = Union(switch_policy(sw) for sw in topo.keys())
+    assert isinstance(forwarding, Policy)
+    fwall = firewall()
+    assert isinstance(fwall, Policy)
+    return fwall >> forwarding
 
 class LearningApp(frenetic.App):
     client_id = "learning"
