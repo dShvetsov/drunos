@@ -1,0 +1,1 @@
+[{"OFPT_PACKET_OUT": 0, "lldp_packet_outs": 0, "OFPT_GROUP_MOD": 0, "OFPT_PACKET_IN": 67029, "loss": 83.33333333333333, "lldp_packet_ins": 0, "topo": "Linear", "OFPT_FLOW_MOD": 130, "dl_type=0x88cc": 0, "OFPT_FLOW_REMOVED": 0, "hosts": 4, "nodes": 8, "proactive_count": 228}]
