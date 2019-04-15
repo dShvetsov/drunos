@@ -66,6 +66,7 @@ set(SOURCES
     STPCli.cc
     # funcs test
     TestApps.cc
+    QtExecutor.hh
 )
 
 add_definitions(
@@ -81,10 +82,20 @@ include_directories(
 
 add_library(runos_base STATIC ${TESTABLE_SOURCES})
 
+
 target_link_libraries(runos_base
         Qt5::Core)
 
 add_executable(runos Main.cc ${SOURCES})
+
+target_compile_definitions(runos
+    PUBLIC ${BOOST_THREAD_CONFIG}
+)
+
+target_compile_definitions(runos_base
+    PUBLIC ${BOOST_THREAD_CONFIG}
+)
+
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
 target_link_libraries(runos

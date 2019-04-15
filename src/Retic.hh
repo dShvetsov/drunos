@@ -13,6 +13,7 @@
 #include "retic/fdd.hh"
 #include "OFDriver.hh"
 #include "SwitchConnection.hh"
+#include "QtExecutor.hh"
 #include <fluid/of13msg.hh>
 
 namespace runos {
@@ -49,6 +50,7 @@ private:
     std::unordered_map<uint64_t, runos::OFDriverPtr> m_drivers;
     std::unique_ptr<runos::Of13Backend> m_backend;
     uint8_t m_table;
+    runos::qt_executor m_executor{this};
 };
 
 

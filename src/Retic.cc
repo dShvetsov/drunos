@@ -27,10 +27,16 @@ void Retic::init(Loader* loader, const Config& root_config)
     auto ctrl = Controller::get(loader);
 
     ctrl->registerHandler<of13::PacketIn>([=](of13::PacketIn& pi, SwitchConnectionPtr conn) {
-        try {
-            DVLOG(10) << "PacketIn";
+        DVLOG(10) << "PacketIn";
 
-            PacketParser pp{pi, conn->dpid()};
+        auto saved_pi = std::make_shared<of13::PacketIn>();
+        saved_pi->add_oxm_field(new of13::InPort(pi.match().in_port()->value()));
+        saved_pi->data(pi.data(), pi.data_len());
+
+        auto main_thread_handler = [this, saved_pi, dpid=conn->dpid()]() mutable {
+            try {
+            auto& pi = *saved_pi;
+            PacketParser pp{pi, dpid};
 
             retic::fdd::Traverser traverser(pp, m_backend.get());
             auto& leaf = boost::apply_visitor(traverser, m_fdd);
@@ -43,10 +49,12 @@ void Retic::init(Loader* loader, const Config& root_config)
                 }
                 sets.push_back(s.pred_actions);
             }
-            m_backend->packetOuts(static_cast<uint8_t*>(pi.data()), pi.data_len(), sets, conn->dpid());
-        } catch (std::exception& e) {
-            LOG(ERROR) << "Error in retic packetin handler: " << e.what();
-        }
+            m_backend->packetOuts(static_cast<uint8_t*>(pi.data()), pi.data_len(), sets, dpid);
+            } catch (std::exception& e) {
+                LOG(ERROR) << "Error in retic packetin handler: " << e.what();
+            }
+        };
+        async(m_executor, main_thread_handler);
     });
 
     m_table = ctrl->getTable("retic");
@@ -74,9 +82,12 @@ void Retic::registerPolicy(std::string name, retic::policy policy) {
 }
 
 void Retic::onSwitchUp(SwitchConnectionPtr conn, of13::FeaturesReply fr) {
-    m_backend = nullptr;
-    m_drivers[conn->dpid()] = makeDriver(conn);
-    this->reinstallRules();
+    auto new_driver = makeDriver(conn);
+    async(m_executor, [this, dpid=conn->dpid(), new_driver]() {
+        m_backend = nullptr;
+        m_drivers[dpid] = new_driver;
+        this->reinstallRules();
+    });
 }
 
 std::vector<std::string> Retic::getPoliciesName() const {
