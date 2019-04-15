@@ -36,7 +36,8 @@ def timeout_iperf( self, hosts=None, l4Type='TCP', udpBw='10M', fmt=None,
     client, server = hosts
     output( '*** Iperf: testing', l4Type, 'bandwidth between',
             client, 'and', server, '\n' )
-    server.cmd( 'killall -9 iperf' )
+    server.cmd( 'timeout 10 killall -9 iperf' )
+    output('kill all iperf')
     iperfArgs = 'timeout %d iperf -p %d ' % (timeout, port)
     bwArgs = ''
     if l4Type == 'UDP':
@@ -48,6 +49,7 @@ def timeout_iperf( self, hosts=None, l4Type='TCP', udpBw='10M', fmt=None,
         iperfArgs += '-f %s ' % fmt
     start_time = time.time()
     server.sendCmd( iperfArgs + '-s' )
+    output('iperf started')
     if l4Type == 'TCP':
         if not waitListening( client, server.IP(), port ):
             raise Exception( 'Could not connect to iperf on port %d'
@@ -62,6 +64,7 @@ def timeout_iperf( self, hosts=None, l4Type='TCP', udpBw='10M', fmt=None,
     while len( re.findall( '/sec', servout ) ) < count:
         if time.time() - start_time > timeout:
             break
+        output('waiting...')
         servout += server.monitor( timeoutms=500 )
     server.sendInt()
     servout += server.waitOutput()
@@ -192,8 +195,8 @@ def run_mininet(*args, **kwargs):
     try:
         net = Mininet(*args, **kwargs)
         net.start()
-        net.waitConnected(timeout=5.0, delay=1.0)
-        time.sleep(1) # give controller time to start
+        net.waitConnected(delay=0.3)
+        time.sleep(3) # give controller time to start
         yield net
     finally:
         try:
@@ -282,6 +285,7 @@ def run_example(topo, prefix, controller):
         print("Topo has no dsh_name")
         raise
 
+    print ("Run example: {}, nodes: {}", topo.dsh_name, len(topo.nodes()))
     messages = [
         'OFPT_FLOW_MOD',
         'OFPT_PACKET_IN',
