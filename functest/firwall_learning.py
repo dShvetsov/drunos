@@ -47,17 +47,24 @@ def learn(app, switch_id,payload,pt):
     return "updates_needed"
 
 def switch_policy(sw):
-    def f((known,unknown),mac):
+    def f((known, unknown_src, unknown_dst),mac):
         src = EthSrcEq(mac)
         dst = EthDstEq(mac)
-        return (known | Filter(dst) >> SetPort(table[sw][mac]), unknown & ~src)
+        return (known | Filter(dst) >> SetPort(table[sw][mac]), unknown_src & ~src, unknown_dst & ~dst)
 
-    (known_pol, unknown_pred) = reduce(f, table[sw].keys(), (drop, true))
+    (known_pol, unknown_src, unknown_dst) = reduce(f, table[sw].keys(), (drop, true, true))
+    print (unknown_src)
     # print "Known pol: ", known_pol.to_json()
     # print "Unknown pred: ", unknown_pred.to_json()
     # print "Controller: ", controller().to_json()
     # print "Flood(sw): ", flood(sw).to_json()
-    return known_pol | (Filter(unknown_pred) >> (SendToController("learning_controller") | flood(sw)))
+
+    return known_pol | (Filter(unknown_src) >> SendToController("learning_controller")) | (Filter(unknown_dst) >> flood(sw))
+
+# Right, but doesn't works
+#    return known_pol |
+#           (Filter(unknown_src) >> (SendToController("learning_controller"))) |
+#           (Filter(unknown_dst) >> flood(sw))
 
 def basic_firewall():
     ipv6 = 0x86dd
