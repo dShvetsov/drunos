@@ -30,11 +30,24 @@ class field_set : public Packet {
     using Container = std::unordered_set< field<>, HashByType, EqualByType >;
     Container entries;
 
+    std::vector<oxm::field<>> _excluded;
+
 public:
     typedef typename Container::iterator iterator;
     typedef typename Container::const_iterator const_iterator;
 
     field_set() = default;
+
+    void exclude(oxm::field<> sw) {
+        _excluded.push_back(sw);
+    }
+
+    void include(oxm::field<> sw) {
+        auto it = std::find(_excluded.begin(), _excluded.end(), sw);
+        _excluded.erase(it);
+    }
+
+    auto& excluded() const { return _excluded; }
 
     // types of all fields should be different.
     // otherwise behaviour is undefined.

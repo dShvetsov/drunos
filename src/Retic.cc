@@ -202,6 +202,12 @@ void Of13Backend::install_on(
     retic::FlowSettings settings
 ) {
     using namespace retic;
+    oxm::field<> this_switch = oxm::switch_id() == dpid;
+    for (auto& exc: match.excluded()) {
+        if (exc == this_switch) {
+            return;
+        }
+    }
     static const auto ofb_out_port = oxm::out_port();
     auto driver_it = m_drivers.find(dpid);
     if (driver_it == m_drivers.end()) {

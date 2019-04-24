@@ -116,7 +116,7 @@ retic::policy route_policy(data_link_route route) {
         uint32_t inport = it->port;
         uint32_t outport = (it+1)->port;
         p = p + (filter(switch_id == it->dpid) >>
-                 filter(in_port == inport) >>
+                 // filter(in_port == inport) >>
                  fwd(outport));
     }
     return p;

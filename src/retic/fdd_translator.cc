@@ -20,7 +20,9 @@ void Translator::operator()(const node& n) {
 
     if (previous_mask.has_value()) {
         if (previous_mask.value() == oxm::mask<>(n.field)) {
+            match.exclude(n.field);
             boost::apply_visitor(*this, n.negative);
+            match.include(n.field);
 
             prio_down = prio_middle;
             previous_mask = std::nullopt;
@@ -32,7 +34,9 @@ void Translator::operator()(const node& n) {
 
             prio_middle = prio_up / 2 + prio_down / 2;
             previous_mask = oxm::mask<>(n.field);
+            match.exclude(n.field);
             boost::apply_visitor(*this, n.negative);
+            match.include(n.field);
 
             prio_down = prio_middle;
             previous_mask = std::nullopt;
@@ -43,7 +47,9 @@ void Translator::operator()(const node& n) {
     } else {
         prio_middle = prio_up / 2 + prio_down / 2;
         previous_mask = oxm::mask<>(n.field);
+        match.exclude(n.field);
         boost::apply_visitor(*this, n.negative);
+        match.include(n.field);
 
         prio_down = prio_middle;
         previous_mask = std::nullopt;
