@@ -157,6 +157,22 @@ STPPorts STP::getDisabledPorts(uint64_t dpid)
     return sw->getDisabledPorts();
 }
 
+runos::retic::policy STP::stupidBroadcastPolicy() const {
+    using namespace runos::retic;
+    static constexpr auto switch_id = oxm::switch_id();
+    policy broadcast;
+    for (auto [dpid, sw]: switch_list) {
+        policy spawn;
+        for (auto out_p: sw->getEnabledPorts()) {
+            spawn += fwd(out_p);
+        }
+        VLOG(35) << "Spawn on " << dpid << ":" << spawn;
+        broadcast += (filter(switch_id == dpid) >> spawn);
+    }
+    VLOG(20) << "Broadcast policy is :" << broadcast;
+    return broadcast;
+}
+
 runos::retic::policy STP::broadcastPolicy() const {
     // TODO: find the way to test this function
     using namespace runos::retic;

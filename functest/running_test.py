@@ -9,7 +9,7 @@ from collections import defaultdict
 import simplejson as json
 
 from mininet.net import Mininet
-from mininet.util import dumpNodeConnections
+from mininet.util import dumpNodeConnections, waitListening
 from mininet.moduledeps import moduleDeps, pathCheck, TUN
 from mininet.node import Controller
 import mininet.topo
@@ -38,7 +38,8 @@ def timeout_iperf( self, hosts=None, l4Type='TCP', udpBw='10M', fmt=None,
             client, 'and', server, '\n' )
     server.cmd( 'timeout 10 killall -9 iperf' )
     output('kill all iperf')
-    iperfArgs = 'timeout %d iperf -p %d ' % (timeout, port)
+    # Kill by timeout with signal 9
+    iperfArgs = 'timeout -s9 %d iperf -p %d ' % (timeout, port)
     bwArgs = ''
     if l4Type == 'UDP':
         iperfArgs += '-u '
@@ -51,9 +52,10 @@ def timeout_iperf( self, hosts=None, l4Type='TCP', udpBw='10M', fmt=None,
     server.sendCmd( iperfArgs + '-s' )
     output('iperf started')
     if l4Type == 'TCP':
-        if not waitListening( client, server.IP(), port ):
+        if not waitListening( client, server.IP(), port, timeout=timeout):
             raise Exception( 'Could not connect to iperf on port %d'
                              % port )
+    output('iperf client command sent')
     cliout = client.cmd( iperfArgs + '-t %d -c ' % seconds +
                          server.IP() + ' ' + bwArgs )
     output( 'Client output: %s\n' % cliout )
@@ -258,7 +260,8 @@ def run_snooping(net, messages):
 def count_flows(net):
     ret = 0
     for sw in net.switches:
-        ftable = sw.dpctl('dump-flows')
+        ftable = sw.dpctl('dump-flows -OOpenFlow13')
+        print(ftable)
         ret += len(ftable.split('\n'))
     return ret
 
@@ -297,11 +300,12 @@ def run_example(topo, prefix, controller):
     with run_mininet(topo, autoStaticArp=True, controller=controller) as net:
         print("start: {}: nodes {}, hosts {}".format(topo.dsh_name, len(topo.nodes()), len(topo.hosts())))
         files = run_snooping(net, messages)
+        print(files)
         print("Snooping started")
         proactive_count = count_flows(net)
         print("Proactive flows: {}".format(proactive_count))
         start_time = time.time()
-        loss = net.pingAll(timeout=1)
+        loss = net.pingAll(timeout=5)
         net.iperf(seconds=1, port=3000) # pass
         for port in range(2220, 2225):
             try:
@@ -310,6 +314,7 @@ def run_example(topo, prefix, controller):
                 print(e)
                 raise
         result = parse_snoop_files(files, messages)
+        print(result)
         result['loss'] = loss
         result['hosts'] = len(topo.hosts())
         result['nodes'] = len(topo.nodes())

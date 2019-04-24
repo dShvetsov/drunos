@@ -231,7 +231,7 @@ void LearningSwitch::init(Loader *loader, const Config &)
 
             if (is_broadcast(dst_mac)) {
                 LOG(INFO) << "Capture the broadcast packet. Install broadcast rules";
-                return m_stp->broadcastPolicy();
+                return m_stp->stupidBroadcastPolicy();
             }
 
             ethaddr src_mac = pkt.load(ofb_eth_src);
@@ -265,7 +265,7 @@ void LearningSwitch::init(Loader *loader, const Config &)
             } else {
                 if (not is_broadcast(dst_mac)) {
                     // TODO: unhardcode
-                    return idle_timeout(std::chrono::seconds::zero()) >> (
+                    return hard_timeout(std::chrono::seconds::zero()) >> (
                         m_stp->broadcastPolicy()
                     );
                 }

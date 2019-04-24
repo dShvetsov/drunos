@@ -103,6 +103,7 @@ public:
         };
     };
 
+    runos::retic::policy stupidBroadcastPolicy() const;
     runos::retic::policy broadcastPolicy() const;
 
     void init(Loader* loader, const Config& config) override;
