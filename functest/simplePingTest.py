@@ -38,7 +38,7 @@ def run_mininet(*args, **kwargs):
     try:
         net = Mininet(*args, **kwargs)
         net.start()
-        time.sleep(0.5) # give controller time to start
+        time.sleep(2) # give controller time to start
         yield net
     finally:
         net.stop()
@@ -111,6 +111,7 @@ def test_topology():
 def test_learning_switch():
     topo = mininet.topo.LinearTopo(k=4, n=1, sopts={'protocols': 'OpenFlow13'})
     with run_mininet(topo, controller=profiled_runos('learning_switch')) as net:
+        time.sleep(2)  # A bit more waiting to give topology time to learn the topology
         loss = net.pingAll(timeout=1)
         assert loss == 0
 
