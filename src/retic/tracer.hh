@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdexcept>
+#include <functional>
 #include <boost/optional.hpp>
 #include "policies.hh"
 #include "api/Packet.hh"
@@ -61,13 +62,16 @@ private:
 
 class Tracer {
 public:
-    Tracer(policy p)
-        : m_policy(p)
+    Tracer(std::function<policy(Packet&)> p)
+        : m_packet_handler(p)
+    { }
+    Tracer(policy m_policy)
+        : m_packet_handler(boost::get<PacketFunction>(m_policy).function)
     { }
 
     Trace trace(Packet& pkt) const;
 private:
-    const policy& m_policy;
+    std::function<policy(Packet&)> m_packet_handler;
 };
 
 Trace mergeTrace(const std::vector<Trace>& trace, oxm::field_set cache = {});

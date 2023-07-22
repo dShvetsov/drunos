@@ -119,6 +119,26 @@ TEST(TracerTest, TestResults) {
     EXPECT_EQ(merged_trace.result(), modify(F<3>() << 3) + modify(F<4>() << 4));
 }
 
+TEST(TestLeafApplier, GetTracerOneHandler) {
+    auto p1 = handler([](Packet& pkt) {
+        pkt.load(F<1>());
+        return id();
+    });
+    PacketFunction pf1 = boost::get<PacketFunction>(p1);
+
+    fdd::leaf l = {{
+        {{oxm::field_set{}}, pf1}
+    }};
+    oxm::field_set fs1{F<1>() == 1, F<2>() == 2, F<3>() == 3};
+    auto traces = getTraces(l, fs1);
+    EXPECT_THAT(traces, UnorderedElementsAre(
+        AllOf(
+            Property(&Trace::values, ElementsAre(load_node{F<1>() == 1})),
+            Property(&Trace::result, id())
+        )
+    ));
+}
+
 TEST(TestLeafApplier, GetTracer) {
     auto p1 = handler([](Packet& pkt) {
         pkt.load(F<1>());

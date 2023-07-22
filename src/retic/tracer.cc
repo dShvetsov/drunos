@@ -43,8 +43,7 @@ Trace Tracer::trace(Packet& pkt) const {
     Trace ret;
     maple::TraceablePacketImpl traceable_pkt(pkt, ret);
     ModTrackingPacket mod_tracking(traceable_pkt);
-    auto f = boost::get<PacketFunction>(m_policy);
-    policy p = f.function(mod_tracking);
+    policy p = m_packet_handler(mod_tracking);
     for (auto& mod: mod_tracking.mods()) {
         p = modify(mod) >> p;
     }
