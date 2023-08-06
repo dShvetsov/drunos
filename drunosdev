@@ -1,0 +1,14 @@
+#!/bin/bash
+
+MOUNTPOINT=/userdata
+PWD=`pwd`
+RUNOS_PORT=8000
+
+docker run --rm --privileged -ti \
+       -e DEV_UID=$UID \
+       -e DEV_USER=$USER \
+       -v $PWD:$MOUNTPOINT \
+       -v /lib/modules:/lib/modules \
+       -p 127.0.0.1:$RUNOS_PORT:$RUNOS_PORT \
+       -h drunos \
+       denshv/drunos

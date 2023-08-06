@@ -1,80 +1,22 @@
-<img src="https://raw.githubusercontent.com/ARCCN/runos/master/logo_runos_small.jpg" alt="RUNOS logo" width="50%" height="50%">
+# What is dRunos
 
-# What is RuNOS
-
-Runos is an OpenFlow Controller.
+dRunos is an OpenFlow Controller.
 
 It is fully userspace controller with high functionality, easy to develop your apps, relatively high performance comparing with existing controllers.
 It supports OpenFlow 1.3.
 
-More info: http://arccn.github.io/runos/
 
-Slides: http://www.slideshare.net/AlexanderShalimov/runos-openflow-controller-eng
+# Environment
 
-RuNOS documentation [ru]: http://arccn.github.io/runos/doc/ru/index.html (Actual for 0.6 version)
+Instead of installing all the dependencies we recommend to use a pre-built docker container, with all dependecies installed.
 
-# Build prerequirements
-
-This components should be installed in the system:
-
-* Utilities: cmake, autoconf, libtool, pkg-config
-* libfluid dependencies: libevent openssl.
-* Libraries: QtCore 5, google-glog, boost::graph, boost::system, boost::thread, boost::coroutine, boost::context, uglifyjs
-* UglifyJS dependencies: npm, nodejs
-
-You can use this line on Ubuntu 15.10+ to install required packages:
 
 ```
-$ sudo apt-get install build-essential cmake autoconf libtool \
-    pkg-config libgoogle-glog-dev \
-    libssl-dev qtbase5-dev libboost-graph-dev libboost-system-dev \
-    libboost-thread-dev libboost-coroutine-dev libboost-context-dev \
-    libgoogle-perftools-dev curl nodejs npm libedit-dev \
+./drunosdev
 ```
 
-To install newest version of libfmt :
-```
-$ git clone https://github.com/fmtlib/fmt.git
-$ cd fmt
-$ mkdir build -p && cd build
-$ cmake .. && make
-$ sudo make install
-```
+Note: We don't provide pre-built drunos binary because the main purpose of drunos is high-level domain specific language for defining network application, and we don't support plugins now.
 
-To install libevent on Ubuntu 17.10+, just use
-```
-$ sudo apt-get install libevent-dev
-
-```
-On older systems, you have to install it manually. At least version 2.1.5 is required:
-```
-# Get the source code
-$ wget https://github.com/libevent/libevent/releases/download/release-2.1.5-beta/libevent-2.1.5-beta.tar.gz
-$ tar -xvf libevent-2.1.5-beta.tar.gz
-$ cd libevent-2.1.5-beta
-# And build
-$ ./configure
-$ make
-$ sudo make install
-$ sudo ldconfig
-```
-You need to install the JavaScript packages:
-
-```
-    $ sudo  npm install uglify-js -g
-
-    # You maybe needed to  creating symbolic link from nodejs to node
-    $ sudo ln -s /usr/bin/nodejs /usr/bin/node
-```
-
-To build the project you must use g++-5.2 compiler (or above) or another compiler with support of std::regex.
-If it is not bundled, we recommend to install g++-5.2 this way:
-
-```
-sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-sudo apt-get update
-sudo apt-get install g++-5.2
-```
 
 # Building
 
@@ -84,15 +26,29 @@ $ third_party/bootstrap.sh
 
 # Create out of source build directory
 $ mkdir -p build; cd build
-# Configure (if you use g++)
-$ CXX=g++-5.2 cmake -DCMAKE_BUILD_TYPE=Release ..
-# OR configure (otherwise)
+# Configure
 $ cmake -DCMAKE_BUILD_TYPE=Release ..
 
 # Build third-party libraries
 $ make prefix -j2
-# Build RuNOS
+# Build dRunos
 $ make -j2
+```
+
+# Running unit test
+
+To run unit test
+
+```
+cd build && make test
+```
+
+# Running function test
+
+To run functional test with mininet and different application
+
+```
+cd functest && pytest simplePingTest.py
 ```
 
 # Running
@@ -122,43 +78,6 @@ http://$CONTROLLER_IP:8000/topology.html
 
 Be sure your MiniNet installation supports OpenFlow 1.3.
 See https://wiki.opendaylight.org/view/OpenDaylight_OpenFlow_Plugin::Test_Environment#Setup_CPqD_Openflow_1.3_Soft_Switch for more instructions.
-
-# Using QtCreator
-1. Execute Building section, but use
-   `cmake -DCMAKE_BUILD_TYPE=Debug ..` instead `Release`
-2. In QtCreator `File->Open File or Project`
-   and select `CMakeLists.txt` as project file
-3. In build section: select build directory as `./build`
-4. In run section:
-    * select working direcory as `./` (project path)
-    * set Run Environment:
-        * `LD_LIBRARY_PATH` to `$PDW/prefix/lib` for Linux
-        * `DYLD_LIBRARY_PATH` to `$PWD/prefix/lib` for OS X
-        * `GLOG_logtostderr` to `1`
-        * `GLOG_colorlogtostderr` to `1`
-5. Compile and run!
-
-# Using JetBrains CLion
-1. Add project to CLion by `File->Open...` and select the project root's location. Further we will call it as `./`
-2. Mark `./third_party` directory as Library root (right click to the directory name in `Project view` panel) and restart the IDE.
-You may also need to install `libfluid` system-wide: it will be used by CLion for making smart suggestions (not for compilation).
-3. Configure project.
-Bad news are that Clion is still not be able to build project natively (via `Build` action), but you can build it by running a bash comand (write your own or use listed bellow one).
-Good news are that graphical debugger and other aspects of using IDE works perfect!
-So, `Edit configurations... -> runos`:
-    * Executable: select `./build/runos`
-    * Working directory: `./`
-    * Environment variables:
-        * `LD_LIBRARY_PATH` to `./prefix/lib` for Linux
-        * `GLOG_logtostderr` to `1`
-        * `GLOG_colorlogtostderr` to `1`
-    * Before launch:
-        * Remove `Build`
-        * Add `Run external tool -> Add...`:
-            * Program: `/bin/bash`
-            * Parameters: `-c "cd ./build/ && make -j2 && source ../debug_run_env.sh"`
-    * Mark the configuration as `Single instance only`
-4. Compile and run via `Run` action or launch debugging session via `Debug` action!
 
 # Writing your first RuNOS app
 
